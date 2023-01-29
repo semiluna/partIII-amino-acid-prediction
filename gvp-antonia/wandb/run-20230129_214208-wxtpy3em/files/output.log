@@ -1,0 +1,8 @@
+Traceback (most recent call last):
+  File "main.py", line 212, in <module>
+    main()
+  File "main.py", line 209, in main
+    train(args)
+  File "main.py", line 171, in train
+    if args.gpus > 0:
+AttributeError: 'Namespace' object has no attribute 'gpus'
