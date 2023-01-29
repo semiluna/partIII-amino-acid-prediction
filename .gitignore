@@ -4,6 +4,8 @@ gvp-pytorch
 *__pycache__*
 .DS_Store
 
+*/saved_models/*
+*/lighting_logs/*
 __pycache__/
 *.py[cod]
 *$py.class
