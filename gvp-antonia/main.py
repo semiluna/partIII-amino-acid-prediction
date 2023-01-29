@@ -227,7 +227,7 @@ def train(args):
             max_epochs=args.epochs,
             accelerator='gpu',
             devices=args.gpus,
-            strategy=args.strategy,
+            strategy='ddp',
             # logger=wandb_logger,
         ) 
     else:
