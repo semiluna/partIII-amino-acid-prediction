@@ -220,7 +220,7 @@ def train(args):
     root_dir = os.path.join(CHECKPOINT_PATH, args.model)
     os.makedirs(root_dir, exist_ok=True)
 
-    # wandb_logger = WandbLogger(project='part3-res-prediction-diss')
+    wandb_logger = WandbLogger(project='part3-res-prediction-diss')
 
     if args.gpus > 0:
         trainer = pl.Trainer(
@@ -231,7 +231,7 @@ def train(args):
             accelerator='gpu',
             devices=args.gpus,
             strategy='ddp',
-            # logger=wandb_logger,
+            logger=wandb_logger,
         ) 
     else:
         trainer = pl.Trainer(
@@ -239,7 +239,7 @@ def train(args):
             callbacks=[ModelCheckpoint(save_weights_only=True, mode="max", 
                                         monitor="val_acc")],
             max_epochs=args.epochs,
-            # logger=wandb_logger
+            logger=wandb_logger
         )
 
     print('Start training...')
