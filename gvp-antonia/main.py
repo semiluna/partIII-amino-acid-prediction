@@ -4,6 +4,7 @@ import numpy as np
 import time
 import argparse
 import random
+import pickle
 
 import torch
 import torch.nn as nn
@@ -14,7 +15,8 @@ import pytorch_lightning as pl
 from pytorch_lightning.loggers import WandbLogger
 from pytorch_lightning.callbacks import ModelCheckpoint
 
-from atom3d.datasets import LMDBDataset
+# from atom3d.datasets import LMDBDataset
+from lmdb_dataset import LMDBDataset
 
 from gvp import GVP_GNN
 from protein_graph import AtomGraphBuilder, _element_alphabet
@@ -171,7 +173,7 @@ class RESDataset(IterableDataset):
             per_worker = int(math.ceil(length / float(worker_info.num_workers)))
             worker_id = worker_info.id
             iter_start = worker_id * per_worker
-            iter_end = min(iter_start + per_worker, len(self.idx))
+            iter_end = min(iter_start + per_worker, length)
             gen = self._dataset_generator(indices[iter_start:iter_end])
         return gen
 
@@ -198,16 +200,16 @@ class RESDataset(IterableDataset):
                 graph.label = aa
                 graph.ca_idx = int(ca_idx)
                 yield graph
-                
+
 
 def train(args):
     pl.seed_everything(42)
     train_dataloader = DataLoader(RESDataset(os.path.join(args.data_file, 'train'), shuffle=True), 
-                        batch_size=None)
+                        batch_size=None, num_workers=8)
     val_dataloader = DataLoader(RESDataset(os.path.join(args.data_file, 'val')), 
-                        batch_size=None)
+                        batch_size=None, num_workers=8)
     test_dataloader = DataLoader(RESDataset(os.path.join(args.data_file, 'test')), 
-                        batch_size=None)
+                        batch_size=None, num_workers=8)
 
     pl.seed_everything()
     example = next(iter(train_dataloader))
@@ -254,7 +256,7 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--model', type=str, default='gvp', choices=['gvp'])
     parser.add_argument('--epochs', type=int, default=10)
-    parser.add_argument('--lr', type=float, default=1e-4)
+    parser.add_argument('--lr', type=float, default=1e-3)
     parser.add_argument('--n_layers', type=int, default=5)
     parser.add_argument('--gpus', type=int, default=0)
     parser.add_argument('--data_file', type=str, default=DATASET_PATH)
