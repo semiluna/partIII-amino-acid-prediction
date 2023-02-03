@@ -135,7 +135,7 @@ class ModelWrapper(pl.LightningModule):
     
     def test_step(self, graph, batch_idx):
         out = self.model(graph)
-        labels = torch.tensor(graph.label, dtype=torch.long).unsqueeze(-1)
+        labels = torch.tensor(graph.label, dtype=torch.long).unsqueeze(-1).to(graph)
         
         loss = self.loss_fn(out, labels)
         acc = out[0, torch.argmax(out[0], dim=-1)] == labels[0]
