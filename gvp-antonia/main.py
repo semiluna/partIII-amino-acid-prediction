@@ -82,7 +82,8 @@ MODEL_SELECT = {'gvp': RES_GVP }
 class ModelWrapper(pl.LightningModule):
     def __init__(self, model_cls, lr, example, **model_args):
         super().__init__()
-        self.model = model_cls(example, device=self.device, **model_args)
+        # self.model = model_cls(example, device=self.device, **model_args)
+        self.model = model_cls(example, **model_args)
         self.lr = lr
         self.loss_fn = nn.CrossEntropyLoss()
 
