@@ -206,11 +206,11 @@ class RESDataset(IterableDataset):
 def train(args):
     pl.seed_everything(42)
     train_dataloader = DataLoader(RESDataset(os.path.join(args.data_file, 'train'), shuffle=True), 
-                        batch_size=None, num_workers=8)
+                        batch_size=None, num_workers=args.data_workers)
     val_dataloader = DataLoader(RESDataset(os.path.join(args.data_file, 'val')), 
-                        batch_size=None, num_workers=8)
+                        batch_size=None, num_workers=args.data_workers)
     test_dataloader = DataLoader(RESDataset(os.path.join(args.data_file, 'test')), 
-                        batch_size=None, num_workers=8)
+                        batch_size=None, num_workers=args.data_workers)
 
     pl.seed_everything()
     example = next(iter(train_dataloader))
@@ -261,6 +261,7 @@ def main():
     parser.add_argument('--n_layers', type=int, default=5)
     parser.add_argument('--gpus', type=int, default=0)
     parser.add_argument('--data_file', type=str, default=DATASET_PATH)
+    parser.add_argument('--data_workers', type=int, default=0)
     args = parser.parse_args()
     train(args)
 

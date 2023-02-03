@@ -190,19 +190,7 @@ def tuple_index(x, idx):
     return x[0][idx], x[1][idx]
 
 
-# def randn(n, dims, device="cpu"):
-#     """
-#     Returns random tuples (s, V) drawn elementwise from a normal distribution.
-
-#     :param n: number of data points
-#     :param dims: tuple of dimensions (n_scalar, n_vector)
-
-#     :return: (s, V) with s.shape = (n, n_scalar) and
-#              V.shape = (n, n_vector, 3)
-#     """
-#     return torch.randn(n, dims[0], device=device), torch.randn(n, dims[1], 3, device=device)
-
-def randn(n, dims):
+def randn(n, dims, device="cpu"):
     """
     Returns random tuples (s, V) drawn elementwise from a normal distribution.
 
@@ -212,7 +200,19 @@ def randn(n, dims):
     :return: (s, V) with s.shape = (n, n_scalar) and
              V.shape = (n, n_vector, 3)
     """
-    return torch.randn(n, dims[0]), torch.randn(n, dims[1], 3)
+    return torch.randn(n, dims[0], device=device), torch.randn(n, dims[1], 3, device=device)
+
+# def randn(n, dims):
+#     """
+#     Returns random tuples (s, V) drawn elementwise from a normal distribution.
+
+#     :param n: number of data points
+#     :param dims: tuple of dimensions (n_scalar, n_vector)
+
+#     :return: (s, V) with s.shape = (n, n_scalar) and
+#              V.shape = (n, n_vector, 3)
+#     """
+#     return torch.randn(n, dims[0]), torch.randn(n, dims[1], 3)
 
 
 def _norm_no_nan(x, axis=-1, keepdims=False, eps=1e-8, sqrt=True):
@@ -311,8 +311,9 @@ class GVP(nn.Module):
         else:
             s = self.ws(x)
             if self.vo:
-                # v = torch.zeros(s.shape[0], self.vo, 3, device=self.dummy_param.device)
-                v = torch.zeros(s.shape[0], self.vo, 3)
+                v = torch.zeros(s.shape[0], self.vo, 3, 
+                        device=(x.get_device() if x.get_device() >= 0 else torch.device('cpu')))
+                # v = torch.zeros(s.shape[0], self.vo, 3)
                 
         if self.scalar_act:
             s = self.scalar_act(s)
@@ -338,12 +339,13 @@ class _VDropout(nn.Module):
         # device = self.dummy_param.device
         if not self.training:
             return x
-        # mask = torch.bernoulli(
-        #     (1 - self.drop_rate) * torch.ones(x.shape[:-1], device=device)
-        # ).unsqueeze(-1)
         mask = torch.bernoulli(
-            (1 - self.drop_rate) * torch.ones(x.shape[:-1])
+            (1 - self.drop_rate) * torch.ones(x.shape[:-1], 
+                    device=(x.get_device() if x.get_device() >= 0 else torch.device('cpu')))
         ).unsqueeze(-1)
+        # mask = torch.bernoulli(
+        #     (1 - self.drop_rate) * torch.ones(x.shape[:-1])
+        # ).unsqueeze(-1)
         x = mask * x / (1 - self.drop_rate)
         return x
 
