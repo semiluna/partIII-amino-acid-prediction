@@ -4,6 +4,7 @@ gvp-pytorch
 *__pycache__*
 .DS_Store
 
+part3-res-prediction-diss/
 */saved_models/*
 */lighting_logs/*
 __pycache__/

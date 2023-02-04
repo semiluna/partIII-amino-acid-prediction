@@ -158,15 +158,18 @@ class ModelWrapper(pl.LightningModule):
         return {'accuracy': acc, 'test_loss': total_loss}
 
 class RESDataset(IterableDataset):
-    def __init__(self, dataset_path, shuffle=False):
+    def __init__(self, dataset_path, max_len=None, sample_per_item=None, shuffle=False):
         self.dataset = LMDBDataset(dataset_path)
         self.graph_builder = AtomGraphBuilder(_element_alphabet)
         self.shuffle = shuffle
+        self.max_len = max_len
+        self.sample_per_item = sample_per_item
 
     def __iter__(self):
         length = len(self.dataset)
+        if self.max_len:
+            length = min(length, self.max_len)
         indices = list(range(length))
-
         worker_info = torch.utils.data.get_worker_info()
         if worker_info is None:
             gen = self._dataset_generator(indices)
@@ -187,7 +190,11 @@ class RESDataset(IterableDataset):
 
             atoms = item['atoms']
             # Mask the residues one at a time for a single graph
-            for sub in item['labels'].itertuples():
+            if self.sample_per_item:
+                limit = self.sample_per_item
+            else:
+                limit = len(item['labels'])
+            for sub in item['labels'][:limit].itertuples():
                 _, num, aa = sub.subunit.split('_')
                 num, aa = int(num), _amino_acids(aa)
                 if aa == 20:
@@ -205,11 +212,14 @@ class RESDataset(IterableDataset):
 
 def train(args):
     pl.seed_everything(42)
-    train_dataloader = DataLoader(RESDataset(os.path.join(args.data_file, 'train'), shuffle=True), 
+    train_dataloader = DataLoader(RESDataset(os.path.join(args.data_file, 'train'), shuffle=True, 
+                        max_len=args.max_len, sample_per_item = args.sample_per_item), 
                         batch_size=None, num_workers=args.data_workers)
-    val_dataloader = DataLoader(RESDataset(os.path.join(args.data_file, 'val')), 
+    val_dataloader = DataLoader(RESDataset(os.path.join(args.data_file, 'val'), 
+                        max_len=args.max_len, sample_per_item = args.sample_per_item), 
                         batch_size=None, num_workers=args.data_workers)
-    test_dataloader = DataLoader(RESDataset(os.path.join(args.data_file, 'test')), 
+    test_dataloader = DataLoader(RESDataset(os.path.join(args.data_file, 'test'), 
+                        max_len=args.max_len, sample_per_item = args.sample_per_item), 
                         batch_size=None, num_workers=args.data_workers)
 
     pl.seed_everything()
@@ -226,7 +236,7 @@ def train(args):
         trainer = pl.Trainer(
             default_root_dir=root_dir,
             callbacks=[ModelCheckpoint(save_weights_only=True, mode="max", 
-                                        monitor="val_acc")],
+                                        monitor="val_acc_on_epoch_end")],
             max_epochs=args.epochs,
             accelerator='gpu',
             devices=args.gpus,
@@ -237,7 +247,7 @@ def train(args):
         trainer = pl.Trainer(
             default_root_dir=root_dir,
             callbacks=[ModelCheckpoint(save_weights_only=True, mode="max", 
-                                        monitor="val_acc")],
+                                        monitor="val_acc_on_epoch_end")],
             max_epochs=args.epochs,
             logger=wandb_logger
         )
@@ -262,6 +272,9 @@ def main():
     parser.add_argument('--gpus', type=int, default=0)
     parser.add_argument('--data_file', type=str, default=DATASET_PATH)
     parser.add_argument('--data_workers', type=int, default=0)
+    parser.add_argument('--max_len', type=int, default=None)
+    parser.add_argument('--sample_per_item', type=int, default=None)
+
     args = parser.parse_args()
     train(args)
 
