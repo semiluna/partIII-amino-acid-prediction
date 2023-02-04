@@ -104,7 +104,10 @@ class GVP_GNN(nn.Module):
         )
 
         self.dense = nn.Sequential(
-            nn.Linear(ns, 2 * ns), nn.ReLU(inplace=True), nn.Dropout(p=0.1), nn.Linear(2 * ns, 1)
+            nn.Linear(ns, 2 * ns), 
+            nn.ReLU(inplace=True), 
+            nn.Dropout(p=0.1), 
+            nn.Linear(2 * ns, 1)
         )
 
         # self.to(device)

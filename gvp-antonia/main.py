@@ -94,9 +94,8 @@ class ModelWrapper(pl.LightningModule):
     def training_step(self, graph, batch_idx):
         out = self.model(graph)
         labels = torch.tensor(graph.label, dtype=torch.long).unsqueeze(-1).to(self.device)
-        
         loss = self.loss_fn(out, labels)
-        acc = out[0, torch.argmax(out[0], dim=-1)] == labels[0]
+        acc = torch.argmax(out[0], dim=-1) == labels[0]
         self.log('train_loss', loss, batch_size=1)
 
         return {'loss': loss, 'acc': acc}
@@ -108,9 +107,10 @@ class ModelWrapper(pl.LightningModule):
             sum += output['acc']
             total_loss += output['loss']
         acc = 1.0 * sum / len(outputs)
+        total_loss /= len(output)
 
-        self.log('train_acc_on_epoch_end', acc, batch_size=1)
-        self.log('train_loss_on_epoch_end', total_loss, batch_size=1)
+        self.log('train_acc_on_epoch_end', acc, batch_size=1, sync_dist=True)
+        self.log('train_loss_on_epoch_end', total_loss, batch_size=1, sync_dist=True)
 
     def validation_step(self, graph, batch_idx):
         out = self.model(graph)
@@ -129,9 +129,10 @@ class ModelWrapper(pl.LightningModule):
             sum += output['acc']
             total_loss += output['loss']
         acc = 1.0 * sum / len(outputs)
+        total_loss /= len(outputs)
 
-        self.log('val_acc_on_epoch_end', acc, batch_size=1)
-        self.log('val_loss_on_epoch_end', total_loss, batch_size=1)
+        self.log('val_acc_on_epoch_end', acc, batch_size=1, sync_dist=True)
+        self.log('val_loss_on_epoch_end', total_loss, batch_size=1, sync_dist=True)
     
     def test_step(self, graph, batch_idx):
         out = self.model(graph)
@@ -151,9 +152,10 @@ class ModelWrapper(pl.LightningModule):
             sum += output['acc']
             total_loss += output['loss']
         acc = 1.0 * sum / len(outputs)
+        total_loss /= len(outputs)
 
-        self.log('test_acc_on_epoch_end', acc)
-        self.log('test_loss_on_epoch_end', total_loss)
+        self.log('test_acc_on_epoch_end', acc, batch_size=1, sync_dist=True)
+        self.log('test_loss_on_epoch_end', total_loss, batch_size=1, sync_dist=True)
         
         return {'accuracy': acc, 'test_loss': total_loss}
 
