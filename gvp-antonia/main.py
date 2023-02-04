@@ -6,6 +6,7 @@ import argparse
 import random
 import pickle
 
+import dadaptation
 import torch
 import torch.nn as nn
 import torch.optim as optim 
@@ -88,7 +89,7 @@ class ModelWrapper(pl.LightningModule):
         self.loss_fn = nn.CrossEntropyLoss()
 
     def configure_optimizers(self):
-        optimiser = optim.Adam(self.parameters(), lr=self.lr)
+        optimiser = dadaptation.DAdaptAdam(self.parameters(), lr=1)
         return optimiser
 
     def training_step(self, graph, batch_idx):
