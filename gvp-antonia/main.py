@@ -109,7 +109,7 @@ class ModelWrapper(pl.LightningModule):
             sum += output['acc']
             total_loss += output['loss']
         acc = 1.0 * sum / len(outputs)
-        total_loss /= len(output)
+        total_loss /= len(outputs)
 
         self.log('train_acc_on_epoch_end', acc, batch_size=1, sync_dist=True)
         self.log('train_loss_on_epoch_end', total_loss, batch_size=1, sync_dist=True)
