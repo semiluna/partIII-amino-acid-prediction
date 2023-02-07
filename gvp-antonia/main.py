@@ -81,9 +81,10 @@ class RES_GVP(nn.Module):
 MODEL_SELECT = {'gvp': RES_GVP }
 
 class ModelWrapper(pl.LightningModule):
-    def __init__(self, model_cls, lr, example, **model_args):
+    def __init__(self, model_name, lr, example, **model_args):
         super().__init__()
         # self.model = model_cls(example, device=self.device, **model_args)
+        model_cls = MODEL_SELECT[model_name]
         self.model = model_cls(example, **model_args)
         self.lr = lr
         self.loss_fn = nn.CrossEntropyLoss()
@@ -210,12 +211,13 @@ class RESDataset(IterableDataset):
                 graph = self.graph_builder(my_atoms)
                 graph.label = aa
                 graph.ca_idx = int(ca_idx)
+                graph.ensemble = item['id']
                 yield graph
 
 
 def train(args):
     pl.seed_everything(42)
-    train_dataloader = DataLoader(RESDataset(os.path.join(args.data_file, 'train'), shuffle=True, 
+    train_dataloader = DataLoader(RESDataset(os.path.join(args.data_file, 'train'), shuffle=False, 
                         max_len=args.max_len, sample_per_item = args.sample_per_item), 
                         batch_size=None, num_workers=args.data_workers)
     val_dataloader = DataLoader(RESDataset(os.path.join(args.data_file, 'val'), 
@@ -227,8 +229,7 @@ def train(args):
 
     pl.seed_everything()
     example = next(iter(train_dataloader))
-    model_cls = MODEL_SELECT[args.model]
-    model = ModelWrapper(model_cls, args.lr, example, n_layers=args.n_layers)
+    model = ModelWrapper(args.model, args.lr, example, n_layers=args.n_layers)
 
     root_dir = os.path.join(CHECKPOINT_PATH, args.model)
     os.makedirs(root_dir, exist_ok=True)
@@ -240,6 +241,7 @@ def train(args):
             default_root_dir=root_dir,
             callbacks=[ModelCheckpoint(save_weights_only=True, mode="max", 
                                         monitor="val_acc_on_epoch_end")],
+            log_every_n_steps=1,
             max_epochs=args.epochs,
             accelerator='gpu',
             devices=args.gpus,
@@ -251,6 +253,7 @@ def train(args):
             default_root_dir=root_dir,
             callbacks=[ModelCheckpoint(save_weights_only=True, mode="max", 
                                         monitor="val_acc_on_epoch_end")],
+            log_every_n_steps=1,
             max_epochs=args.epochs,
             logger=wandb_logger
         )
@@ -260,8 +263,8 @@ def train(args):
     trainer.fit(model, train_dataloader, val_dataloader)
     end = time.time()
     print('TRAINING TIME: {:.4f} (s)'.format(end - start))
-    best_model = ModelWrapper.load_from_checkpoint(
-                                trainer.checkpoint_callback.best_model_path)
+    best_model = ModelWrapper(args.model, args.lr, example, n_layers=args.n_layers)
+    best_model.load_state_dict(torch.load(trainer.checkpoint_callback.best_model_path)['state_dict'])
     
     test_result = trainer.test(best_model, test_dataloader)
     print(test_result)
