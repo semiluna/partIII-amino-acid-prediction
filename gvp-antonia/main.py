@@ -90,7 +90,7 @@ class ModelWrapper(pl.LightningModule):
         self.loss_fn = nn.CrossEntropyLoss()
 
     def configure_optimizers(self):
-        optimiser = dadaptation.DAdaptAdam(self.parameters(), lr=1)
+        optimiser = optim.Adam(self.parameters(), lr=self.lr)
         return optimiser
 
     def training_step(self, graph, batch_idx):
