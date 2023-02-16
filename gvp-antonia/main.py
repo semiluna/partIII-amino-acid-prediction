@@ -64,13 +64,13 @@ _DEFAULT_V_DIM = (100, 16)
 _DEFAULT_E_DIM = (32, 1)
 
 class RES_GVP(nn.Module):
-    def __init__(self, example, **model_args):
+    def __init__(self, example, dropout, **model_args):
         super().__init__()
         ns, _ = _DEFAULT_V_DIM
         self.gvp = GVP_GNN.init_from_example(example, **model_args)
         self.dense = nn.Sequential(
             nn.Linear(ns, 2*ns), nn.ReLU(inplace=True),
-            nn.Dropout(p=0.1),
+            nn.Dropout(p=dropout),
             nn.Linear(2*ns, 20)
         )   
     
@@ -82,11 +82,11 @@ class RES_GVP(nn.Module):
 MODEL_SELECT = {'gvp': RES_GVP }
 
 class ModelWrapper(pl.LightningModule):
-    def __init__(self, model_name, lr, example, **model_args):
+    def __init__(self, model_name, lr, example, dropout, **model_args):
         super().__init__()
         # self.model = model_cls(example, device=self.device, **model_args)
         model_cls = MODEL_SELECT[model_name]
-        self.model = model_cls(example, **model_args)
+        self.model = model_cls(example, dropout, **model_args)
         self.lr = lr
         self.loss_fn = nn.CrossEntropyLoss()
 
@@ -237,7 +237,7 @@ def train(args):
 
     pl.seed_everything()
     example = next(iter(train_dataloader))
-    model = ModelWrapper(args.model, args.lr, example, n_layers=args.n_layers)
+    model = ModelWrapper(args.model, args.lr, example, args.dropout, n_layers=args.n_layers)
 
     root_dir = os.path.join(CHECKPOINT_PATH, args.model)
     os.makedirs(root_dir, exist_ok=True)
@@ -289,6 +289,7 @@ def main():
     parser.add_argument('--max_len', type=int, default=None)
     parser.add_argument('--sample_per_item', type=int, default=None)
     parser.add_argument('--batch_size', type=int, default=8)
+    parser.add_argument('--dropout', type=float, default=0.1)
 
     args = parser.parse_args()
     train(args)
