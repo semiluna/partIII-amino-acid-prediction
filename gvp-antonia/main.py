@@ -6,11 +6,12 @@ import argparse
 import random
 import pickle
 
-import dadaptation
 import torch
 import torch.nn as nn
 import torch.optim as optim 
 from torch.utils.data import DataLoader, IterableDataset
+
+from torch_geometric.loader import DataLoader as geom_DataLoader
 
 import pytorch_lightning as pl
 from pytorch_lightning.loggers import WandbLogger
@@ -95,71 +96,78 @@ class ModelWrapper(pl.LightningModule):
 
     def training_step(self, graph, batch_idx):
         out = self.model(graph)
-        labels = torch.tensor(graph.label, dtype=torch.long).unsqueeze(-1).to(self.device)
+        labels = graph.label.to(self.device)
         loss = self.loss_fn(out, labels)
-        acc = torch.argmax(out[0], dim=-1) == labels[0]
-        self.log('train_loss', loss, batch_size=1)
+        acc = torch.sum(torch.argmax(out, dim=-1) == labels)
+        self.log('train_loss', loss)
 
-        return {'loss': loss, 'acc': acc}
+        return {'loss': loss, 'acc': acc, 'n_graphs': len(labels)}
     
     def training_epoch_end(self, outputs):
-        sum = 0
+        correct_graphs = 0
+        total_graphs = 0
         total_loss = 0.0
         for output in outputs:
-            sum += output['acc']
+            correct_graphs += output['acc']
+            total_graphs += output['n_graphs']
             total_loss += output['loss']
-        acc = 1.0 * sum / len(outputs)
+        acc = 1.0 * correct_graphs / total_graphs
         total_loss /= len(outputs)
 
-        self.log('train_acc_on_epoch_end', acc, batch_size=1, sync_dist=True)
-        self.log('train_loss_on_epoch_end', total_loss, batch_size=1, sync_dist=True)
+        self.log('train_acc_on_epoch_end', acc, sync_dist=True)
+        self.log('train_loss_on_epoch_end', total_loss, sync_dist=True)
 
     def validation_step(self, graph, batch_idx):
         out = self.model(graph)
-        labels = torch.tensor(graph.label, dtype=torch.long).unsqueeze(-1).to(self.device)
-
+        labels = graph.label.to(self.device)
         loss = self.loss_fn(out, labels)
-        acc = out[0, torch.argmax(out[0], dim=-1)] == labels[0]
-        self.log('val_loss', loss, batch_size=1)
+        acc = torch.sum(torch.argmax(out, dim=-1) == labels)
+        self.log('val_loss', loss, batch_size = len(labels))
 
-        return {'loss': loss, 'acc': acc}
+        return {'loss': loss, 'acc': acc, 'n_graphs': len(labels)}
     
     def validation_epoch_end(self, outputs):
-        sum = 0
+        correct_graphs = 0
+        total_graphs = 0
         total_loss = 0.0
         for output in outputs:
-            sum += output['acc']
+            correct_graphs += output['acc']
+            total_graphs += output['n_graphs']
             total_loss += output['loss']
-        acc = 1.0 * sum / len(outputs)
+        acc = 1.0 * correct_graphs / total_graphs
         total_loss /= len(outputs)
 
-        self.log('val_acc_on_epoch_end', acc, batch_size=1, sync_dist=True)
-        self.log('val_loss_on_epoch_end', total_loss, batch_size=1, sync_dist=True)
+        self.log('val_acc_on_epoch_end', acc, sync_dist=True)
+        self.log('val_loss_on_epoch_end', total_loss, sync_dist=True)
     
     def test_step(self, graph, batch_idx):
         out = self.model(graph)
-        labels = torch.tensor(graph.label, dtype=torch.long).unsqueeze(-1).to(self.device)
+        labels = graph.label.to(self.device)
         
         loss = self.loss_fn(out, labels)
-        acc = out[0, torch.argmax(out[0], dim=-1)] == labels[0]
-        self.log('test_acc', acc, batch_size=1)
-        self.log('test_loss', loss, batch_size=1)
+        acc = torch.sum(torch.argmax(out[0], dim=-1) == labels)
+        self.log('test_acc', acc, batch_size=len(labels))
+        self.log('test_loss', loss, batch_size=len(labels))
 
-        return {'loss': loss, 'acc': acc}
+        return {'loss': loss, 'acc': acc, 'n_graphs': len(labels)}
     
     def test_epoch_end(self, outputs):
-        sum = 0
+        correct_graphs = 0
+        total_graphs = 0
         total_loss = 0.0
         for output in outputs:
-            sum += output['acc']
+            correct_graphs += output['acc']
+            total_graphs += output['n_graphs']
             total_loss += output['loss']
-        acc = 1.0 * sum / len(outputs)
+
+        acc = 1.0 * correct_graphs / total_graphs
         total_loss /= len(outputs)
 
-        self.log('test_acc_on_epoch_end', acc, batch_size=1, sync_dist=True)
-        self.log('test_loss_on_epoch_end', total_loss, batch_size=1, sync_dist=True)
+        self.log('test_acc_on_epoch_end', acc, sync_dist=True)
+        self.log('test_loss_on_epoch_end', total_loss, sync_dist=True)
         
         return {'accuracy': acc, 'test_loss': total_loss}
+
 
 class RESDataset(IterableDataset):
     def __init__(self, dataset_path, max_len=None, sample_per_item=None, shuffle=False):
@@ -217,15 +225,15 @@ class RESDataset(IterableDataset):
 
 def train(args):
     pl.seed_everything(42)
-    train_dataloader = DataLoader(RESDataset(os.path.join(args.data_file, 'train'), shuffle=False, 
+    train_dataloader = geom_DataLoader(RESDataset(os.path.join(args.data_file, 'train'), shuffle=False, 
                         max_len=args.max_len, sample_per_item = args.sample_per_item), 
-                        batch_size=None, num_workers=args.data_workers)
-    val_dataloader = DataLoader(RESDataset(os.path.join(args.data_file, 'val'), 
+                        batch_size=args.batch_size, num_workers=args.data_workers)
+    val_dataloader = geom_DataLoader(RESDataset(os.path.join(args.data_file, 'val'), 
                         max_len=args.max_len, sample_per_item = args.sample_per_item), 
-                        batch_size=None, num_workers=args.data_workers)
-    test_dataloader = DataLoader(RESDataset(os.path.join(args.data_file, 'test'), 
+                        batch_size=args.batch_size, num_workers=args.data_workers)
+    test_dataloader = geom_DataLoader(RESDataset(os.path.join(args.data_file, 'test'), 
                         max_len=args.max_len, sample_per_item = args.sample_per_item), 
-                        batch_size=None, num_workers=args.data_workers)
+                        batch_size=args.batch_size, num_workers=args.data_workers)
 
     pl.seed_everything()
     example = next(iter(train_dataloader))
@@ -280,6 +288,7 @@ def main():
     parser.add_argument('--data_workers', type=int, default=0)
     parser.add_argument('--max_len', type=int, default=None)
     parser.add_argument('--sample_per_item', type=int, default=None)
+    parser.add_argument('--batch_size', type=int, default=8)
 
     args = parser.parse_args()
     train(args)
