@@ -6,7 +6,7 @@ import argparse
 import random
 import pickle
 
-# import lovely_tensors as lt
+import lovely_tensors as lt
 
 import torch
 import torch.nn as nn
@@ -77,9 +77,9 @@ class RES_GVP(nn.Module):
         )   
     
     def forward(self, graph):
-        out = self.gvp(graph)
+        out = self.gvp(graph, scatter_mean=False)
         out = self.dense(out)
-        return out
+        return out[graph.ca_idx + graph.ptr[:-1]]
 
 MODEL_SELECT = {'gvp': RES_GVP }
 
@@ -103,9 +103,6 @@ class ModelWrapper(pl.LightningModule):
         acc = torch.sum(torch.argmax(out, dim=-1) == labels)
         self.log('train_loss', loss)
 
-        assert not torch.any(torch.isnan(out)), "Some values are NaN"
-        assert not torch.any(torch.isinf(out)), "Some values are inf"
-        
         return {'loss': loss, 'acc': acc, 'n_graphs': len(labels)}
     
     def training_epoch_end(self, outputs):
