@@ -6,6 +6,8 @@ import argparse
 import random
 import pickle
 
+# import lovely_tensors as lt
+
 import torch
 import torch.nn as nn
 import torch.optim as optim 
@@ -101,6 +103,9 @@ class ModelWrapper(pl.LightningModule):
         acc = torch.sum(torch.argmax(out, dim=-1) == labels)
         self.log('train_loss', loss)
 
+        assert not torch.any(torch.isnan(out)), "Some values are NaN"
+        assert not torch.any(torch.isinf(out)), "Some values are inf"
+        
         return {'loss': loss, 'acc': acc, 'n_graphs': len(labels)}
     
     def training_epoch_end(self, outputs):
@@ -243,7 +248,7 @@ def train(args):
     os.makedirs(root_dir, exist_ok=True)
 
     wandb_logger = WandbLogger(project='part3-res-prediction-diss')
-
+    # lt.monkey_patch()
     if args.gpus > 0:
         trainer = pl.Trainer(
             default_root_dir=root_dir,
