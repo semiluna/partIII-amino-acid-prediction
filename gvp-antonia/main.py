@@ -246,7 +246,7 @@ def train(args):
     root_dir = os.path.join(CHECKPOINT_PATH, args.model)
     os.makedirs(root_dir, exist_ok=True)
 
-    wandb_logger = WandbLogger(project='l45-team')
+    wandb_logger = WandbLogger(project='part3-res-prediction-diss')
     # lt.monkey_patch()
     if args.gpus > 0:
         trainer = pl.Trainer(
