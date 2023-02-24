@@ -5,6 +5,7 @@ import time
 import argparse
 import random
 import pickle
+import signal
 
 import lovely_tensors as lt
 
@@ -19,6 +20,7 @@ from torch_geometric.loader import DataLoader as geom_DataLoader
 import pytorch_lightning as pl
 from pytorch_lightning.loggers import WandbLogger
 from pytorch_lightning.callbacks import ModelCheckpoint
+from pytorch_lightning.plugins.enviornments import SLURMEnvironment
 
 # from atom3d.datasets import LMDBDataset
 from lmdb_dataset import LMDBDataset
@@ -229,17 +231,18 @@ class RESDataset(IterableDataset):
 
 def train(args):
     pl.seed_everything(42)
-    train_dataloader = geom_DataLoader(RESDataset(os.path.join(args.data_file, 'train'), shuffle=False, 
+    pinned = args.gpus > 0
+    train_dataloader = geom_DataLoader(RESDataset(os.path.join(args.data_file, 'train'), shuffle=True, 
                         max_len=args.max_len, sample_per_item = args.sample_per_item), 
-                        batch_size=args.batch_size, num_workers=args.data_workers)
+                        batch_size=args.batch_size, num_workers=args.data_workers, pin_memory=pinned)
     val_dataloader = geom_DataLoader(RESDataset(os.path.join(args.data_file, 'val'), 
                         max_len=args.max_len, sample_per_item = args.sample_per_item), 
-                        batch_size=args.batch_size, num_workers=args.data_workers)
+                        batch_size=args.batch_size, num_workers=args.data_workers, pin_memory=pinned)
     test_dataloader = geom_DataLoader(RESDataset(os.path.join(args.data_file, 'test'), 
                         max_len=args.max_len, sample_per_item = args.sample_per_item), 
-                        batch_size=args.batch_size, num_workers=args.data_workers)
+                        batch_size=args.batch_size, num_workers=args.data_workers, pin_memory=pinned)
 
-    pl.seed_everything()
+
     example = next(iter(train_dataloader))
     model = ModelWrapper(args.model, args.lr, example, args.dropout, n_layers=args.n_layers)
 
@@ -249,6 +252,11 @@ def train(args):
     wandb_logger = WandbLogger(project='part3-res-prediction-diss')
     # lt.monkey_patch()
     if args.gpus > 0:
+        if args.slurm:
+            plugins = [SLURMEnvironment(requeue_signal=signal.SIGHUP)]
+        else:
+            plugins = None
+
         trainer = pl.Trainer(
             default_root_dir=root_dir,
             callbacks=[ModelCheckpoint(save_weights_only=True, mode="max", 
@@ -259,6 +267,7 @@ def train(args):
             devices=args.gpus,
             strategy='ddp',
             logger=wandb_logger,
+            plugins=plugins
         ) 
     else:
         trainer = pl.Trainer(
@@ -294,6 +303,7 @@ def main():
     parser.add_argument('--sample_per_item', type=int, default=None)
     parser.add_argument('--batch_size', type=int, default=8)
     parser.add_argument('--dropout', type=float, default=0.1)
+    parser.add_argument('--slurm', action='store_true', help='Whether or not this is a SLURM job.')
 
     args = parser.parse_args()
     train(args)
