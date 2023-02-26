@@ -20,7 +20,7 @@ from torch_geometric.loader import DataLoader as geom_DataLoader
 import pytorch_lightning as pl
 from pytorch_lightning.loggers import WandbLogger
 from pytorch_lightning.callbacks import ModelCheckpoint
-from pytorch_lightning.plugins.enviornments import SLURMEnvironment
+from pytorch_lightning.plugins.environments import SLURMEnvironment
 
 # from atom3d.datasets import LMDBDataset
 from lmdb_dataset import LMDBDataset
