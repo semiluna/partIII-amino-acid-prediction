@@ -265,6 +265,7 @@ def train(args):
             max_epochs=args.epochs,
             accelerator='gpu',
             devices=args.gpus,
+            num_nodes=args.num_nodes,
             strategy='ddp',
             logger=wandb_logger,
             plugins=plugins
@@ -304,6 +305,7 @@ def main():
     parser.add_argument('--batch_size', type=int, default=8)
     parser.add_argument('--dropout', type=float, default=0.1)
     parser.add_argument('--slurm', action='store_true', help='Whether or not this is a SLURM job.')
+    parser.add_argument('--num_nodes', type=int, default=1)
 
     args = parser.parse_args()
     train(args)
