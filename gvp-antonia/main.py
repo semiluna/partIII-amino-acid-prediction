@@ -11,6 +11,9 @@ import signal
 
 import dadaptation
 import torch
+torch.multiprocessing.set_sharing_strategy('file_system')
+torch.set_float32_matmul_precision('high')
+
 import torch.nn as nn
 import torch.optim as optim 
 from torch.utils.data import DataLoader, IterableDataset
