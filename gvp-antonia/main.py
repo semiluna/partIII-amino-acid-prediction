@@ -96,8 +96,8 @@ class ModelWrapper(pl.LightningModule):
         self.loss_fn = nn.CrossEntropyLoss()
 
     def configure_optimizers(self):
-        # optimiser = optim.Adam(self.parameters(), lr=self.lr)
-        optimiser = dadaptation.DAdaptAdam(self.parameters(), lr=1.0)
+        optimiser = optim.Adam(self.parameters(), lr=self.lr)
+        # optimiser = dadaptation.DAdaptAdam(self.parameters(), lr=1.0)
         return optimiser
 
     def training_step(self, graph, batch_idx):
@@ -230,7 +230,7 @@ class RESDataset(IterableDataset):
 
 
 def train(args):
-    pl.seed_everything(42)
+    pl.seed_everything(args.seed)
     pinned = args.gpus > 0
     train_dataloader = geom_DataLoader(RESDataset(os.path.join(args.data_file, 'train'), shuffle=True, 
                         max_len=args.max_len, sample_per_item = args.sample_per_item), 
@@ -295,7 +295,7 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--model', type=str, default='gvp', choices=['gvp'])
     parser.add_argument('--epochs', type=int, default=10)
-    parser.add_argument('--lr', type=float, default=1e-3)
+    parser.add_argument('--lr', type=float, default=5e-4)
     parser.add_argument('--n_layers', type=int, default=5)
     parser.add_argument('--gpus', type=int, default=0)
     parser.add_argument('--data_file', type=str, default=DATASET_PATH)
@@ -306,6 +306,7 @@ def main():
     parser.add_argument('--dropout', type=float, default=0.1)
     parser.add_argument('--slurm', action='store_true', help='Whether or not this is a SLURM job.')
     parser.add_argument('--num_nodes', type=int, default=1)
+    parser.add_argument('--seed', type=int, default=42)
 
     args = parser.parse_args()
     train(args)
