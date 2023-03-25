@@ -251,8 +251,11 @@ def train(args):
 
     root_dir = os.path.join(CHECKPOINT_PATH, args.model)
     os.makedirs(root_dir, exist_ok=True)
+    if args.resume_checkpoint is None:
+        wandb_logger = WandbLogger(project='part3-res-prediction-diss')
+    else:
+        wandb_logger = WandbLogger(project='part3-res-prediction-diss', id=args.wandb_id, resume='must')
 
-    wandb_logger = WandbLogger(project='part3-res-prediction-diss')
     # lt.monkey_patch()
     if args.gpus > 0:
         if args.slurm:
@@ -283,9 +286,10 @@ def train(args):
             logger=wandb_logger
         )
 
+    ckpt_path = args.resume_checkpoint
     print('Start training...')
     start = time.time()
-    trainer.fit(model, train_dataloader, val_dataloader)
+    trainer.fit(model, train_dataloader, val_dataloader, ckpt_path=ckpt_path)
     end = time.time()
     print('TRAINING TIME: {:.4f} (s)'.format(end - start))
     best_model = ModelWrapper(args.model, args.lr, example, n_layers=args.n_layers)
@@ -310,6 +314,8 @@ def main():
     parser.add_argument('--slurm', action='store_true', help='Whether or not this is a SLURM job.')
     parser.add_argument('--num_nodes', type=int, default=1)
     parser.add_argument('--seed', type=int, default=42)
+    parser.add_argument('--resume_checkpoint', type=str, default=None)
+    parser.add_argument('--wandb_id', type=str, default=None)
 
     args = parser.parse_args()
     train(args)
