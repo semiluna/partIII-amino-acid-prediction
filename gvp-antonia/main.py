@@ -265,8 +265,9 @@ def train(args):
 
         trainer = pl.Trainer(
             default_root_dir=root_dir,
-            callbacks=[ModelCheckpoint(save_weights_only=True, mode="max", 
-                                        monitor="val_acc_on_epoch_end")],
+            callbacks=[
+                ModelCheckpoint(mode="max", monitor="val_acc_on_epoch_end"), 
+                ModelCheckpoint(mode="max", monitor="epoch")], # saves last completed epoch   
             log_every_n_steps=1,
             max_epochs=args.epochs,
             accelerator='gpu',
@@ -279,8 +280,9 @@ def train(args):
     else:
         trainer = pl.Trainer(
             default_root_dir=root_dir,
-            callbacks=[ModelCheckpoint(save_weights_only=True, mode="max", 
-                                        monitor="val_acc_on_epoch_end")],
+            callbacks=[
+                ModelCheckpoint(mode="max", monitor="val_acc_on_epoch_end"),
+                ModelCheckpoint(mode="max", monitor="epoch")], # saves last completed epoch 
             log_every_n_steps=1,
             max_epochs=args.epochs,
             logger=wandb_logger
