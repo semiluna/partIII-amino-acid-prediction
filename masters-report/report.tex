@@ -1,0 +1,395 @@
+% Suggested LaTeX style template for Masters project report submitted at the
+% Department of Computer Science and Technology
+%
+% Markus Kuhn, May 2022
+% (borrowing elements from an earlier template by Steven Hand)
+
+\documentclass[12pt,a4paper]{report}
+% append option ",openright" after "twoside" if you prefer each chapter
+% to start on a recto (odd-numbered) page in a double-sided printout
+\input{packages.tex}
+\newif\ifsubmission % Boolean flag for distinguishing submitted/final version
+
+% Change the following lines to your own project title, name, college, course
+\title{Residue identity prediction from an amino-acid residue's atomic-environment with equivariant graph machine learning}
+\author{Antonia-Irina Boca}
+\date{May 2023}
+\newcommand{\candidatenumber}{2485A}
+\newcommand{\college}{King's College}
+\newcommand{\course}{Computer Science Tripos, Part III}
+%\newcommand{\course}{Master of Philosophy in Advanced Computer Science}
+
+% Select which version this is:
+% For the (anonymous) submission (without your name or acknowledgements)
+% uncomment the following line (or let the makefile do this for you)
+%\submissiontrue
+% For the final version (with your name) leave the above commented.
+
+\begin{document}
+
+\begin{sffamily} % use a sans-serif font for the pro-forma cover sheet
+
+\begin{titlepage}
+\makeatletter
+
+% University logo with shield hanging in left margin
+\hspace*{-14mm}\includegraphics[width=65mm]{logo-dcst-colour}
+
+\ifsubmission
+
+% submission proforma cover page for blind marking
+\begin{Large}
+\vspace{20mm}
+Research project report title page
+
+\vspace{35mm}
+Candidate \candidatenumber
+
+\vspace{42mm}
+\textsl{``\@title''}
+
+\end{Large}
+
+\else
+
+% regular cover page
+\begin{center}
+\Huge
+\vspace{\fill}
+
+\@title
+\vspace{\fill}
+
+\@author
+\vspace{10mm}
+
+\Large
+\college
+\vspace{\fill}
+
+\@date
+\vspace{\fill}
+
+\end{center}
+
+\fi
+
+\vspace{\fill}
+\begin{center}
+Submitted in partial fulfillment of the requirements for the\\
+\course
+\end{center}
+
+\makeatother
+\end{titlepage}
+
+\newpage
+
+Total page count: \pageref{lastpage}
+
+% calculate number of pages from
+% \label{firstcontentpage} to \label{lastcontentpage} inclusive
+\makeatletter
+\@tempcnta=\getpagerefnumber{lastcontentpage}\relax%
+\advance\@tempcnta by -\getpagerefnumber{firstcontentpage}%
+\advance\@tempcnta by 1%
+\xdef\contentpages{\the\@tempcnta}%
+\makeatother
+
+Main chapters (excluding front-matter, references and appendix):
+\contentpages~pages
+(pp~\pageref{firstcontentpage}--\pageref{lastcontentpage})
+
+Main chapters word count: 467
+
+Methodology used to generate that word count:
+
+[For example:
+
+\begin{quote}
+\begin{verbatim}
+$ make wordcount
+gs -q -dSAFER -sDEVICE=txtwrite -o - \
+   -dFirstPage=6 -dLastPage=11 report-submission.pdf | \
+egrep '[A-Za-z]{3}' | wc -w
+467
+\end{verbatim}
+\end{quote}
+
+]
+
+\end{sffamily}
+
+\vspace{\fill}
+\onehalfspacing
+\ifsubmission\else\makeatletter
+\textbf{\Huge Declaration}
+\vspace{40pt}
+
+I, \@author\ of \college, being a candidate for the \course, hereby
+declare that this report and the work described in it are my own work,
+unaided except as may be specified below, and that the report does not
+contain material that has already been used to any substantial extent
+for a comparable purpose.
+
+% Add here things like: Figure X is the work of Y, etc.
+
+\bigskip 
+\textbf{Signed:} Antonia-Irina Boca
+
+\bigskip
+\textbf{Date:} \today
+\vspace{\fill}
+\makeatother\fi
+
+\chapter*{Abstract}
+
+Write a summary of the whole thing. Make sure it fits on one page.
+
+\ifsubmission\else
+% not included in submission for blind marking:
+
+\chapter*{Acknowledgements}
+
+This project would not have been possible without the wonderful
+support of \ldots [optional]
+
+\fi
+\cleardoublepage % preserve page numbers after missing acknowledgements
+
+\tableofcontents
+%\listoffigures
+%\listoftables
+
+\chapter{Introduction}
+
+\label{firstcontentpage} % start page count here
+
+This is the introduction where you should introduce your work. In
+general the thing to aim for here is to describe a little bit of the
+context for your work -- why did you do it (motivation), what was the
+hoped-for outcome (aims) -- as well as trying to give a brief overview
+of what you actually did.
+
+It's often useful to bring forward some ``highlights'' into this
+chapter (e.g.\ some particularly compelling results, or a particularly
+interesting finding).
+
+It's also traditional to give an outline of the rest of the document,
+although without care this can appear formulaic and tedious. Your
+call.
+
+\chapter{Background}
+
+A more extensive coverage of what's required to understand your work.
+In general you should assume the reader has a good undergraduate
+degree in computer science, but is not necessarily an expert in the
+particular area you've been working on. Hence this chapter may need to
+summarize some ``text book'' material.
+
+This is not something you'd normally require in an academic paper, and
+it may not be appropriate for your particular circumstances. Indeed,
+in some cases it's possible to cover all of the ``background''
+material either in the introduction or at appropriate places in the
+rest of the dissertation.
+
+\input{chapters/background.tex}
+
+\chapter{Related work}
+
+This chapter covers relevant (and typically, recent) research
+which you build upon (or improve upon). There are two complementary
+goals for this chapter:
+\begin{enumerate}
+  \item to show that you know and understand the state of the art; and
+  \item to put your work in context
+\end{enumerate}
+
+Ideally you can tackle both together by providing a critique of
+related work, and describing what is insufficient (and how you do
+better!)
+
+The related work chapter should usually come either near the front or
+near the back of the dissertation. The advantage of the former is that
+you get to build the argument for why your work is important before
+presenting your solution(s) in later chapters; the advantage of the
+latter is that don't have to forward reference to your solution too
+much. The correct choice will depend on what you're writing up, and
+your own personal preference.
+
+\input{chapters/related_work.tex}
+
+\chapter{Design and implementation}
+
+This chapter may be called something else\ldots but in general the
+idea is that you have one (or a few) ``meat'' chapters which describe
+the work you did in technical detail.
+
+\input{chapters/design_implementation.tex}
+
+\chapter{Evaluation}
+
+For any practical projects, you should almost certainly have some kind
+of evaluation, and it's often useful to separate this out into its own
+chapter.
+
+\input{chapters/evaluation.tex}
+
+
+\chapter{Summary and conclusions}
+
+As you might imagine: summarizes the dissertation, and draws any
+conclusions. Depending on the length of your work, and how well you
+write, you may not need a summary here.
+
+You will generally want to draw some conclusions, and point to
+potential future work.
+
+\input{chapters/conclusion.tex}
+
+\label{lastcontentpage} % end page count here
+
+\bibliographystyle{unsrtnat}
+\bibliography{reference}
+% For bibLaTeX users:
+% \printbibliography
+
+\clearpage
+
+
+\appendix
+
+\chapter{Technical details, proofs, etc.}
+
+Appendices are for optional materials that is not essential to
+understanding the work, and that the examiners are not expected to
+read, but that will be of value to readers interested in additional,
+in-depth technical detail.
+
+\section{Lorem ipsum}
+
+% Some traditional fake Latin prose for calibrating words/page
+Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam
+nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat,
+sed diam voluptua. At vero eos et accusam et justo duo dolores et ea
+rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem
+ipsum dolor sit amet. Lorem ipsum dolor sit amet, consetetur
+sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et
+dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam
+et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea
+takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit
+amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor
+invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua.
+At vero eos et accusam et justo duo dolores et ea rebum. Stet clita
+kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit
+amet.
+
+\section{Homo sapiens non urinat in ventum}
+Duis autem vel eum iriure dolor in hendrerit in vulputate velit esse
+molestie consequat, vel illum dolore eu feugiat nulla facilisis at
+vero eros et accumsan et iusto odio dignissim qui blandit praesent
+luptatum zzril delenit augue duis dolore te feugait nulla facilisi.
+Lorem ipsum dolor sit amet, consectetuer adipiscing elit, sed diam
+nonummy nibh euismod tincidunt ut laoreet dolore magna aliquam erat
+volutpat.
+
+Ut wisi enim ad minim veniam, quis nostrud exerci tation ullamcorper
+suscipit lobortis nisl ut aliquip ex ea commodo consequat. Duis autem
+vel eum iriure dolor in hendrerit in vulputate velit esse molestie
+consequat, vel illum dolore eu feugiat nulla facilisis at vero eros et
+accumsan et iusto odio dignissim qui blandit praesent luptatum zzril
+delenit augue duis dolore te feugait nulla facilisi.
+
+Nam liber tempor cum soluta nobis eleifend option congue nihil
+imperdiet doming id quod mazim placerat facer possim assum. Lorem
+ipsum dolor sit amet, consectetuer adipiscing elit, sed diam nonummy
+nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat.
+Ut wisi enim ad minim veniam, quis nostrud exerci tation ullamcorper
+suscipit lobortis nisl ut aliquip ex ea commodo consequat.
+
+Duis autem vel eum iriure dolor in hendrerit in vulputate velit esse
+molestie consequat, vel illum dolore eu feugiat nulla facilisis.
+
+At vero eos et accusam et justo duo dolores et ea rebum. Stet clita
+kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit
+amet. Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed
+diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam
+erat, sed diam voluptua. At vero eos et accusam et justo duo dolores
+et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est
+Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, consetetur
+sadipscing elitr, At accusam aliquyam diam diam dolore dolores duo
+eirmod eos erat, et nonumy sed tempor et et invidunt justo labore Stet
+clita ea et gubergren, kasd magna no rebum. sanctus sea sed takimata
+ut vero voluptua. est Lorem ipsum dolor sit amet. Lorem ipsum dolor
+sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor
+invidunt ut labore et dolore magna aliquyam erat.
+
+Consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut
+labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos
+et accusam et justo duo dolores et ea rebum. Stet clita kasd
+gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet.
+Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam
+nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat,
+sed diam voluptua. At vero eos et accusam et justo duo dolores et ea
+rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem
+ipsum dolor sit amet. Lorem ipsum dolor sit amet, consetetur
+sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et
+dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam
+et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea
+takimata sanctus est Lorem ipsum dolor sit amet.
+
+Duis autem vel eum iriure dolor in hendrerit in vulputate velit esse
+molestie consequat, vel illum dolore eu feugiat nulla facilisis at
+vero eros et accumsan et iusto odio dignissim qui blandit praesent
+luptatum zzril delenit augue duis dolore te feugait nulla facilisi.
+Lorem ipsum dolor sit amet, consectetuer adipiscing elit, sed diam
+nonummy nibh euismod tincidunt ut laoreet dolore magna aliquam erat
+volutpat.
+
+Ut wisi enim ad minim veniam, quis nostrud exerci tation ullamcorper
+suscipit lobortis nisl ut aliquip ex ea commodo consequat. Duis autem
+vel eum iriure dolor in hendrerit in vulputate velit esse molestie
+consequat, vel illum dolore eu feugiat nulla facilisis at vero eros et
+accumsan et iusto odio dignissim qui blandit praesent luptatum zzril
+delenit augue duis dolore te feugait nulla facilisi.
+
+Nam liber tempor cum soluta nobis eleifend option congue nihil
+imperdiet doming id quod mazim placerat facer possim assum. Lorem
+ipsum dolor sit amet, consectetuer adipiscing elit, sed diam nonummy
+nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat.
+Ut wisi enim ad minim veniam, quis nostrud exerci tation ullamcorper
+suscipit lobortis nisl ut aliquip ex ea commodo consequat.
+
+Duis autem vel eum iriure dolor in hendrerit in vulputate velit esse
+molestie consequat, vel illum dolore eu feugiat nulla facilisis.
+
+At vero eos et accusam et justo duo dolores et ea rebum. Stet clita
+kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit
+amet. Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed
+diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam
+erat, sed diam voluptua. At vero eos et accusam et justo duo dolores
+et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est
+Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, consetetur
+sadipscing elitr, At accusam aliquyam diam diam dolore dolores duo
+eirmod eos erat, et nonumy sed tempor et et invidunt justo labore Stet
+clita ea et gubergren, kasd magna no rebum. sanctus sea sed takimata
+ut vero voluptua. est Lorem ipsum dolor sit amet. Lorem ipsum dolor
+sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor
+invidunt ut labore et dolore magna aliquyam erat.
+
+Consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut
+labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos
+et accusam et justo duo dolores et ea rebum. Stet clita kasd
+gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet.
+Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam
+nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat,
+sed diam voluptua. At vero eos et accusam et justo duo dolores et ea
+rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem
+ipsum dolor sit amet. Lorem ipsum dolor sit amet, consetetur
+sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et
+dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam
+et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea
+takimata sanctus est Lorem ipsum dolor sit amet.
+
+\label{lastpage}
+\end{document}
