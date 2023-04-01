@@ -1,8 +1,36 @@
-\begin{thebibliography}{0}
+\begin{thebibliography}{3}
 \providecommand{\natexlab}[1]{#1}
 \providecommand{\url}[1]{\texttt{#1}}
 \expandafter\ifx\csname urlstyle\endcsname\relax
   \providecommand{\doi}[1]{doi: #1}\else
   \providecommand{\doi}{doi: \begingroup \urlstyle{rm}\Url}\fi
+
+\bibitem[Hunter(1993)]{hunter1993molecular}
+Lawrence Hunter.
+\newblock Molecular biology for computer scientists.
+\newblock \emph{Artificial intelligence and molecular biology}, 177:\penalty0
+  1--46, 1993.
+
+\bibitem[Lu et~al.(2022)Lu, Diaz, Czarnecki, Zhu, Kim, Shroff, Acosta,
+  Alexander, Cole, Zhang, Lynd, Ellington, and Alper]{Lu2022}
+Hongyuan Lu, Daniel~J. Diaz, Natalie~J. Czarnecki, Congzhi Zhu, Wantae Kim,
+  Raghav Shroff, Daniel~J. Acosta, Bradley~R. Alexander, Hannah~O. Cole, Yan
+  Zhang, Nathaniel~A. Lynd, Andrew~D. Ellington, and Hal~S. Alper.
+\newblock Machine learning-aided engineering of hydrolases for pet
+  depolymerization.
+\newblock \emph{Nature}, 604\penalty0 (7907):\penalty0 662--667, April 2022.
+\newblock ISSN 1476-4687.
+\newblock \doi{10.1038/s41586-022-04599-z}.
+\newblock URL \url{https://doi.org/10.1038/s41586-022-04599-z}.
+
+\bibitem[Townshend et~al.(2020)Townshend, V{\"{o}}gele, Suriana, Derry, Powers,
+  Laloudakis, Balachandar, Anderson, Eismann, Kondor, Altman, and
+  Dror]{atom-3d}
+Raphael J.~L. Townshend, Martin V{\"{o}}gele, Patricia Suriana, Alexander
+  Derry, Alexander Powers, Yianni Laloudakis, Sidhika Balachandar, Brandon~M.
+  Anderson, Stephan Eismann, Risi Kondor, Russ~B. Altman, and Ron~O. Dror.
+\newblock {ATOM3D:} tasks on molecules in three dimensions.
+\newblock \emph{CoRR}, abs/2012.04035, 2020.
+\newblock URL \url{https://arxiv.org/abs/2012.04035}.
 
 \end{thebibliography}
