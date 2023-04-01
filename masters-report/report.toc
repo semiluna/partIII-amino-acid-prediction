@@ -1,9 +1,16 @@
 \contentsline {chapter}{\numberline {1}Introduction}{5}{chapter.1}%
 \contentsline {chapter}{\numberline {2}Background}{6}{chapter.2}%
-\contentsline {chapter}{\numberline {3}Related work}{7}{chapter.3}%
-\contentsline {chapter}{\numberline {4}Design and implementation}{8}{chapter.4}%
-\contentsline {chapter}{\numberline {5}Evaluation}{9}{chapter.5}%
-\contentsline {chapter}{\numberline {6}Summary and conclusions}{10}{chapter.6}%
-\contentsline {chapter}{\numberline {A}Technical details, proofs, etc.}{12}{appendix.A}%
-\contentsline {section}{\numberline {A.1}Lorem ipsum}{12}{section.A.1}%
-\contentsline {section}{\numberline {A.2}Homo sapiens non urinat in ventum}{12}{section.A.2}%
+\contentsline {section}{\numberline {2.1}Biological background}{7}{section.2.1}%
+\contentsline {subsection}{\numberline {2.1.1}Proteins}{7}{subsection.2.1.1}%
+\contentsline {subsection}{\numberline {2.1.2}Residue identity prediction}{7}{subsection.2.1.2}%
+\contentsline {section}{\numberline {2.2}Machine learning background}{7}{section.2.2}%
+\contentsline {subsection}{\numberline {2.2.1}Graph Neural Networks}{7}{subsection.2.2.1}%
+\contentsline {subsection}{\numberline {2.2.2}Equivariant Graph Neural Networks}{7}{subsection.2.2.2}%
+\contentsline {subsection}{\numberline {2.2.3}Representing residues as graphs}{7}{subsection.2.2.3}%
+\contentsline {chapter}{\numberline {3}Related work}{8}{chapter.3}%
+\contentsline {chapter}{\numberline {4}Design and implementation}{9}{chapter.4}%
+\contentsline {chapter}{\numberline {5}Evaluation}{10}{chapter.5}%
+\contentsline {chapter}{\numberline {6}Summary and conclusions}{11}{chapter.6}%
+\contentsline {chapter}{\numberline {A}Technical details, proofs, etc.}{13}{appendix.A}%
+\contentsline {section}{\numberline {A.1}Lorem ipsum}{13}{section.A.1}%
+\contentsline {section}{\numberline {A.2}Homo sapiens non urinat in ventum}{13}{section.A.2}%

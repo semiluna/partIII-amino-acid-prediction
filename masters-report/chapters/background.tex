@@ -2,9 +2,39 @@
     \color{red}
     \begin{enumerate}
         \item Biological background
-        \item \begin{enumerate}
-            \item 
+        \begin{enumerate}
+            \item residue identity prediction
+            \item atomic environments 
+            \item SMILES representation?
         \end{enumerate}
         \item Machine learning background
+        \begin{enumerate}
+            \item neural networks
+            \item graph neural networks
+            \item equivariant graph neural networks
+            \item representing residues as graphs
+        \end{enumerate}
     \end{enumerate}
 }
+
+\section{Biological background}
+\subsection{Proteins}
+\begin{figure}
+    \centering
+    \begin{tikzpicture}
+    \node (acidone) {\chemfig{N(-[3]H)(-[5]H)-C(-[2]H)(-[6]R_1)-C(-[1]{\color{blue}OH})(=[7]O)}};
+    \node[right of=acidone, xshift=5cm] (acidtwo) {\chemfig{N(-[3]H)(-[5]{\color{blue}H})-C(-[2]H)(-[6]R_2)-C(-[1]OH)(=[7]O)}};
+    \draw[->,thick] ($(acidone.east)!0.5!(acidtwo.west)$) ++(0, -1.7cm) -- ++(0,-1cm) node[right] {};
+    \node[below of=acidone, xshift=3cm, yshift=-4.2cm] (residue) 
+        {\chemfig{N(-[3]H)(-[5]H)-C(-[2]H)(-[6]R_1)-C(=[7]O)-[1,,,,blue]N(-[3]H)-C(-[2]H)(-[6]R_2)-C(=[7]O)(-[1]OH)}};
+    
+    \node[below of=residue, yshift=-1.3cm, xshift=-1.8cm] (res1) {\textit{residue 1}};
+    \node[below of=residue, yshift=-1.3cm, xshift=1.8cm] (res1) {\textit{residue 2}};
+    \end{tikzpicture}
+\end{figure}
+\subsection{Residue identity prediction}
+
+\section{Machine learning background}
+\subsection{Graph Neural Networks}
+\subsection{Equivariant Graph Neural Networks}
+\subsection{Representing residues as graphs}
