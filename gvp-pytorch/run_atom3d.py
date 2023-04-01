@@ -92,7 +92,6 @@ def main():
         train(model, trainset, valset, optimizer, start_epoch)
 
 def log(epoch, stats, step=0):
-    return
     for key, value in stats.items():
         with open(f'{args.id}_model_stats.csv', 'a+')  as handle:
             print(f'{epoch},{key},{value},{step}', file=handle)
@@ -149,7 +148,6 @@ def train(model, trainset, valset, optimizer, start_epoch = 0):
 def loop(dataset, model,epoch, optimizer=None, max_time=None, valid=False):
     start = time.time()
     loss_fn = get_loss(args.task)
-    t = tqdm.tqdm()
     total_loss, total_count = 0, 0
     for idx, batch in enumerate(dataset):
         # if max_time and (time.time() - start) > 60*max_time: break
@@ -175,11 +173,17 @@ def loop(dataset, model,epoch, optimizer=None, max_time=None, valid=False):
                 torch.cuda.empty_cache()
                 print('Skipped batch due to OOM', flush=True)
                 continue
-            
-        t.set_description(f"{total_loss/total_count:.8f}")
-        if not valid:
-            log(epoch, {'train_loss': total_loss/total_count}, step=idx)
-        
+                
+        if idx % 1000 == 0:
+            if not valid:
+                print(f'STEP {idx} | LOSS: {total_loss/total_count}')
+                log(epoch, {'train_loss': total_loss/total_count}, step=idx)
+    
+    
+    if not valid:
+        print(f'STEP {idx} | LOSS: {total_loss/total_count}')
+        log(epoch, {'train_loss': total_loss/total_count}, step=idx)
+
     return total_loss / total_count
 
 def load(model, path, optimizer=None):
