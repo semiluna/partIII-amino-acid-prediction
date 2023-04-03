@@ -29,6 +29,7 @@ from pytorch_lightning.plugins.environments import SLURMEnvironment
 from lmdb_dataset import LMDBDataset
 
 from gvp import GVP_GNN
+from mace import RES_MACEModel
 from protein_graph import AtomGraphBuilder, _element_alphabet
 
 DATASET_PATH = '/Users/antoniaboca/Downloads/split-by-cath-topology/data'
@@ -87,7 +88,7 @@ class RES_GVP(nn.Module):
         out = self.dense(out)
         return out[graph.ca_idx + graph.ptr[:-1]]
 
-MODEL_SELECT = {'gvp': RES_GVP }
+MODEL_SELECT = {'gvp': RES_GVP, 'mace': RES_MACEModel }
 
 class ModelWrapper(pl.LightningModule):
     def __init__(self, model_name, lr, example, dropout, **model_args):
@@ -302,7 +303,7 @@ def train(args):
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--model', type=str, default='gvp', choices=['gvp'])
+    parser.add_argument('--model', type=str, default='gvp', choices=['gvp', 'mace'])
     parser.add_argument('--epochs', type=int, default=10)
     parser.add_argument('--lr', type=float, default=5e-4)
     parser.add_argument('--n_layers', type=int, default=5)
