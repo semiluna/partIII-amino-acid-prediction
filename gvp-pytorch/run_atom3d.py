@@ -88,7 +88,7 @@ def main():
         optimizer = torch.optim.Adam(model.parameters(), lr=args.lr)
         start_epoch = 0
         if args.load_checkpoint:
-            start_epoch = load(model, args.load, optimizer)
+            start_epoch = load(model, args.load_checkpoint, optimizer)
         train(model, trainset, valset, optimizer, start_epoch)
 
 def log(epoch, stats, step=0):
