@@ -149,6 +149,8 @@ def loop(dataset, model,epoch, optimizer=None, max_time=None, valid=False):
     start = time.time()
     loss_fn = get_loss(args.task)
     total_loss, total_count = 0, 0
+    if valid:
+        targets, predicts = [], []
     for idx, batch in enumerate(dataset):
         # if max_time and (time.time() - start) > 60*max_time: break
         if optimizer: optimizer.zero_grad()
@@ -164,6 +166,11 @@ def loop(dataset, model,epoch, optimizer=None, max_time=None, valid=False):
         total_loss += float(loss_value)
         total_count += 1
         
+        if valid:
+            out = out.argmax(dim=-1)
+            predicts.extend(list(out.cpu().numpy()))
+            targets.extend(list(label.cpu().numpy()))
+
         if optimizer:
             try:
                 loss_value.backward()
@@ -178,7 +185,11 @@ def loop(dataset, model,epoch, optimizer=None, max_time=None, valid=False):
             if not valid:
                 print(f'STEP {idx} | LOSS: {total_loss/total_count}')
                 log(epoch, {'train_loss': total_loss/total_count}, step=idx)
-    
+            
+    if valid:
+        acc = metrics.accuracy(targets, predicts)
+        print(f'EPOCH {epoch} | VALID ACCURACY: {acc}')
+        log(epoch, {'valid_acc': acc}, step=idx)
     
     if not valid:
         print(f'STEP {idx} | LOSS: {total_loss/total_count}')
