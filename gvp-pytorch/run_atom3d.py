@@ -122,7 +122,7 @@ def test(model, testset):
 
 def train(model, trainset, valset, optimizer, start_epoch = 0):
     best_path, best_val = None, np.inf
-    for epoch in range(start_epoch, args.epochs):
+    for epoch in range(start_epoch + 1, args.epochs):
         print(f' \n\n########## STARTING EPOCH {epoch} ###############')
         model.train()
         loss = loop(trainset, model, epoch, optimizer=optimizer, max_time=args.train_time)
