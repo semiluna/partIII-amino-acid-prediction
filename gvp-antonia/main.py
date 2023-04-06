@@ -9,7 +9,6 @@ import signal
 
 # import lovely_tensors as lt
 
-import dadaptation
 import torch
 torch.multiprocessing.set_sharing_strategy('file_system')
 torch.set_float32_matmul_precision('high')
@@ -28,6 +27,7 @@ from pytorch_lightning.plugins.environments import SLURMEnvironment
 # from atom3d.datasets import LMDBDataset
 from lmdb_dataset import LMDBDataset
 
+from models.equiformer import GraphAttentionTransformer
 from models.gvp import RES_GVP
 from models.mace import RES_MACEModel
 from models.eqgat import RES_EQGATModel
@@ -74,7 +74,7 @@ _amino_acids = lambda x: {
 _DEFAULT_V_DIM = (100, 16)
 _DEFAULT_E_DIM = (32, 1)
 
-MODEL_SELECT = {'gvp': RES_GVP, 'mace': RES_MACEModel, 'eqgat': RES_EQGATModel }
+MODEL_SELECT = {'gvp': RES_GVP, 'mace': RES_MACEModel, 'eqgat': RES_EQGATModel, 'equiformer': GraphAttentionTransformer }
 
 class ModelWrapper(pl.LightningModule):
     def __init__(self, 
@@ -318,7 +318,7 @@ def train(args):
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--model', type=str, default='gvp', choices=['gvp', 'mace', 'eqgat'])
+    parser.add_argument('--model', type=str, default='gvp', choices=['gvp', 'mace', 'eqgat', 'equiformer'])
     parser.add_argument('--epochs', type=int, default=10)
     parser.add_argument('--lr', type=float, default=1e-4)
     parser.add_argument('--n_layers', type=int, default=5)
