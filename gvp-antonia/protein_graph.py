@@ -113,6 +113,7 @@ class AtomGraphBuilder(ProteinGraphBuilder):
             )
 
             edge_index = torch_cluster.radius_graph(coords, r=self.edge_cutoff, loop=self.self_loop)
+            dist = torch.pow(coords[edge_index[0]] - coords[edge_index[1]], exponent=2).sum(-1).sqrt()
 
             edge_s, edge_v = _edge_features(
                 coords,
@@ -128,6 +129,7 @@ class AtomGraphBuilder(ProteinGraphBuilder):
                 edge_index=edge_index,
                 edge_s=edge_s,
                 edge_v=edge_v,
+                edge_weights=dist,
             )
 
 

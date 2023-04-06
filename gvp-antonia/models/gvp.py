@@ -13,13 +13,28 @@ from torch import nn
 from torch_geometric.nn import MessagePassing
 from torch_scatter import scatter_add
 
-# from src.models.module_wrapper import ModuleWrapper
-# from src.utils.logutils import get_logger
-
-# _logger = get_logger(__name__)
-
 # GVP GNN base model along the lines of
 # https://github.com/drorlab/gvp-pytorch/blob/82af6b22eaf8311c15733117b0071408d24ed877/gvp/atom3d.py#L115
+
+_DEFAULT_V_DIM = (100, 16)
+_DEFAULT_E_DIM = (32, 1)
+
+class RES_GVP(nn.Module):
+    def __init__(self, example, dropout, **model_args):
+        super().__init__()
+        ns, _ = _DEFAULT_V_DIM
+        self.gvp = GVP_GNN.init_from_example(example, **model_args)
+        self.dense = nn.Sequential(
+            nn.Linear(ns, 2*ns), nn.ReLU(inplace=True),
+            nn.Dropout(p=dropout),
+            nn.Linear(2*ns, 20)
+        )   
+    
+    def forward(self, graph):
+        out = self.gvp(graph, scatter_mean=False)
+        out = self.dense(out)
+        return out[graph.ca_idx + graph.ptr[:-1]]
+
 class GVP_GNN(nn.Module):
 # class GVP_GNN(ModuleWrapper):
     """

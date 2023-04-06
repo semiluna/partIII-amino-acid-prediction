@@ -22,14 +22,16 @@ from torch_geometric.loader import DataLoader as geom_DataLoader
 
 import pytorch_lightning as pl
 from pytorch_lightning.loggers import WandbLogger
-from pytorch_lightning.callbacks import ModelCheckpoint
+from pytorch_lightning.callbacks import ModelCheckpoint, LearningRateMonitor
 from pytorch_lightning.plugins.environments import SLURMEnvironment
 
 # from atom3d.datasets import LMDBDataset
 from lmdb_dataset import LMDBDataset
 
-from gvp import GVP_GNN
-from mace import RES_MACEModel
+from models.gvp import RES_GVP
+from models.mace import RES_MACEModel
+from models.eqgat import RES_EQGATModel
+
 from protein_graph import AtomGraphBuilder, _element_alphabet
 
 DATASET_PATH = '/Users/antoniaboca/Downloads/split-by-cath-topology/data'
@@ -72,37 +74,48 @@ _amino_acids = lambda x: {
 _DEFAULT_V_DIM = (100, 16)
 _DEFAULT_E_DIM = (32, 1)
 
-class RES_GVP(nn.Module):
-    def __init__(self, example, dropout, **model_args):
-        super().__init__()
-        ns, _ = _DEFAULT_V_DIM
-        self.gvp = GVP_GNN.init_from_example(example, **model_args)
-        self.dense = nn.Sequential(
-            nn.Linear(ns, 2*ns), nn.ReLU(inplace=True),
-            nn.Dropout(p=dropout),
-            nn.Linear(2*ns, 20)
-        )   
-    
-    def forward(self, graph):
-        out = self.gvp(graph, scatter_mean=False)
-        out = self.dense(out)
-        return out[graph.ca_idx + graph.ptr[:-1]]
-
-MODEL_SELECT = {'gvp': RES_GVP, 'mace': RES_MACEModel }
+MODEL_SELECT = {'gvp': RES_GVP, 'mace': RES_MACEModel, 'eqgat': RES_EQGATModel }
 
 class ModelWrapper(pl.LightningModule):
-    def __init__(self, model_name, lr, example, dropout, **model_args):
+    def __init__(self, 
+        model_name, 
+        lr, 
+        example, 
+        dropout, 
+        patience_scheduler: int = 10,
+        factor_scheduler: float = 0.75,
+        **model_args
+    ):
         super().__init__()
-        # self.model = model_cls(example, device=self.device, **model_args)
         model_cls = MODEL_SELECT[model_name]
         self.model = model_cls(example, dropout, **model_args)
         self.lr = lr
+        self.patience_scheduler = patience_scheduler
+        self.factor_scheduler = factor_scheduler
+
         self.loss_fn = nn.CrossEntropyLoss()
 
     def configure_optimizers(self):
         optimiser = optim.Adam(self.parameters(), lr=self.lr)
-        # optimiser = dadaptation.DAdaptAdam(self.parameters(), lr=1.0)
-        return optimiser
+
+        scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
+            optimiser,
+            mode="min",
+            factor=self.factor_scheduler,
+            patience=self.patience_scheduler,
+            min_lr=1e-7,
+            verbose=True,
+        )
+
+        schedulers = [
+            {
+                "scheduler": scheduler,
+                "interval": "epoch",
+                "frequency": 1,
+                "monitor": "val_loss",
+            }
+        ]
+        return [optimiser], schedulers
 
     def training_step(self, graph, batch_idx):
         out = self.model(graph)
@@ -268,7 +281,8 @@ def train(args):
             default_root_dir=root_dir,
             callbacks=[
                 ModelCheckpoint(mode="max", monitor="val_acc_on_epoch_end"), 
-                ModelCheckpoint(mode="max", monitor="epoch")], # saves last completed epoch   
+                ModelCheckpoint(mode="max", monitor="epoch"), # saves last completed epoch 
+                LearningRateMonitor()],   
             log_every_n_steps=1,
             max_epochs=args.epochs,
             accelerator='gpu',
@@ -283,7 +297,8 @@ def train(args):
             default_root_dir=root_dir,
             callbacks=[
                 ModelCheckpoint(mode="max", monitor="val_acc_on_epoch_end"),
-                ModelCheckpoint(mode="max", monitor="epoch")], # saves last completed epoch 
+                ModelCheckpoint(mode="max", monitor="epoch"), # saves last completed epoch 
+                LearningRateMonitor()],
             log_every_n_steps=1,
             max_epochs=args.epochs,
             logger=wandb_logger
@@ -303,9 +318,9 @@ def train(args):
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--model', type=str, default='gvp', choices=['gvp', 'mace'])
+    parser.add_argument('--model', type=str, default='gvp', choices=['gvp', 'mace', 'eqgat'])
     parser.add_argument('--epochs', type=int, default=10)
-    parser.add_argument('--lr', type=float, default=5e-4)
+    parser.add_argument('--lr', type=float, default=1e-4)
     parser.add_argument('--n_layers', type=int, default=5)
     parser.add_argument('--gpus', type=int, default=0)
     parser.add_argument('--data_file', type=str, default=DATASET_PATH)
