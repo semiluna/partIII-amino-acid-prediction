@@ -310,7 +310,7 @@ def train(args):
     trainer.fit(model, train_dataloader, val_dataloader, ckpt_path=ckpt_path)
     end = time.time()
     print('TRAINING TIME: {:.4f} (s)'.format(end - start))
-    best_model = ModelWrapper(args.model, args.lr, example, n_layers=args.n_layers)
+    best_model = ModelWrapper(args.model, args.lr, example, 0.0, n_layers=args.n_layers)
     best_model.load_state_dict(torch.load(trainer.checkpoint_callback.best_model_path)['state_dict'])
     
     test_result = trainer.test(best_model, test_dataloader)
