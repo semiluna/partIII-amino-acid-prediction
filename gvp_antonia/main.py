@@ -169,7 +169,8 @@ class ModelWrapper(pl.LightningModule):
         labels = graph.label.to(self.device)
         
         loss = self.loss_fn(out, labels)
-        acc = torch.sum(torch.argmax(out[0], dim=-1) == labels)
+
+        acc = torch.sum(torch.argmax(out, dim=-1) == labels)
         self.log('test_acc', acc, batch_size=len(labels))
         self.log('test_loss', loss, batch_size=len(labels))
 
