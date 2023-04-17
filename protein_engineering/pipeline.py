@@ -5,7 +5,7 @@ import pickle
 from collections import defaultdict
 import numpy as np
 
-import tqdm
+from tqdm import tqdm
 import torch
 from torch.nn import Softmax
 from biopandas.pdb import PandasPdb
@@ -71,7 +71,7 @@ _codes = lambda x: {
     17: 'TRP',
     18: 'TYR',
     19 : 'VAL',
-}.get(x, 20)
+}.get(x, 'UNK')
 # TODO STEP 1: recover the structure
 _3to1 = lambda aa: protein_letters_3to1[aa.capitalize()]
 
@@ -81,12 +81,13 @@ _3to1 = lambda aa: protein_letters_3to1[aa.capitalize()]
 # !!!!!TODO!!!!! I am giving the ENTIRE molecule to the model
 
 class Pair:
-    def __init__(self, pdb, confidence, mutations, masked_res, og_res):
+    def __init__(self, pdb, confidence, mutations, mutation_confidences, masked_res, og_res):
         self.pdb = pdb
-        self.confidence = confidence
-        self.mutations = mutations
-        self.masked_residue = masked_res
-        self.og_res = og_res
+        self.confidence = float(confidence)
+        self.mutations = [int(x) for x in mutations]
+        self.confs = [float(x) for x in mutation_confidences]
+        self.masked_residue = int(masked_res) 
+        self.og_res = int(og_res)
     
     def __lt__(self, other):
         return self.confidence < other.confidence
@@ -103,31 +104,31 @@ class AADataset(IterableDataset):
 
         if file is not None:
             pdb = PandasPdb().read_pdb(file).df['ATOM']
-            # pdb = pdb.rename(columns={
-            #         'x_coord': 'x', 
-            #         'y_coord':'y', 
-            #         'z_coord': 'z', 
-            #         'element_symbol': 'element', 
-            #         'atom_name': 'name', 
-            #         'residue_name': 'resname'})
+            pdb = pdb.rename(columns={
+                    'x_coord': 'x', 
+                    'y_coord':'y', 
+                    'z_coord': 'z', 
+                    'element_symbol': 'element', 
+                    'atom_name': 'name', 
+                    'residue_name': 'resname'})
         elif code is not None:
             pdb = PandasPdb().fetch_pdb(code).df['ATOM']
-            # pdb = pdb.rename(columns={
-            #         'x_coord': 'x', 
-            #         'y_coord':'y', 
-            #         'z_coord': 'z', 
-            #         'element_symbol': 'element', 
-            #         'atom_name': 'name', 
-            #         'residue_name': 'resname'})
+            pdb = pdb.rename(columns={
+                    'x_coord': 'x', 
+                    'y_coord':'y', 
+                    'z_coord': 'z', 
+                    'element_symbol': 'element', 
+                    'atom_name': 'name', 
+                    'residue_name': 'resname'})
         
         self.pdb = pdb
         self.residues = max(pdb['residue_number'])
     
     def __iter__(self):
-        length = len(self.residues)
+        length = self.residues
         if self.max_len:
             length = min(length, self.max_len)
-        indices = list(range(length))
+        indices = [x+1 for x in list(range(length))]
         worker_info = torch.utils.data.get_worker_info()
         if worker_info is None:
             gen = self._dataset_generator(indices)
@@ -143,15 +144,16 @@ class AADataset(IterableDataset):
         pdb = self.pdb
         # TODO add some sort of ensemble information
         for res_id in res_ids:
-            to_remove = (pdb['residue_number'] == res_id) & (~pdb['atom_name'].isin(['N', 'CA', 'O', 'C'])) 
+            to_remove = (pdb['residue_number'] == res_id) & (~pdb['name'].isin(['N', 'CA', 'O', 'C'])) 
             my_atoms = pdb[~to_remove].reset_index(drop=True)
-            label = pdb[(pdb['residue_number'] == res_id) & (pdb['atom_name'] == 'CA')]['residue_name']
-            ca_idx = np.where((my_atoms['residue_number'] == res_id) & (my_atoms['atom_name'] == 'CA'))[0]
-            if len(ca_idx) != 1: continue
+            label = pdb[(pdb['residue_number'] == res_id) & (pdb['name'] == 'CA')]['resname'].iloc[0]
+            ca_idx = np.where((my_atoms['residue_number'] == res_id) & (my_atoms['name'] == 'CA'))[0]
+            if len(ca_idx) != 1: 
+                continue
 
             graph = self.graph_builder(my_atoms)
             graph.label = _amino_acids(label)
-            graph.ca_idx = ca_idx
+            graph.ca_idx = int(ca_idx)
             graph.masked_res_id = res_id
             graph.wildtype = self.wildtype
             graph.pdb = pdb
@@ -164,7 +166,7 @@ class AADataset(IterableDataset):
 def uncertainty_search(trainer, dataloader, locs=1, k=3): 
     trainer.eval()
 
-    top_k = defaultdict([])
+    top_k = defaultdict(list)
     softmax = Softmax(dim=-1)
 
     for batch in tqdm(dataloader):
@@ -175,18 +177,20 @@ def uncertainty_search(trainer, dataloader, locs=1, k=3):
             labels = batch.label
             # TODO: we only look at places where it is correct?
             res = torch.argmax(probs, dim=-1)
-            tops = torch.topk(probs, k, dim=-1)
+            conf = torch.max(probs, dim=-1)
+            mutation_confs, tops = torch.topk(probs, k, dim=-1)
 
             for g_idx in range(len(batch)):
                 if res[g_idx] == labels[g_idx]:
-                    # it is correct, but that is the confidence?
-                    confidence = res[g_idx]
+                    # it is correct, but what is the confidence?
+                    confidence = conf[g_idx]
                     graph = batch[g_idx]
                     pq = top_k[graph.wildtype]
                     mutations = tops[g_idx]
+                    confs = mutation_confs[g_idx]
 
                     # pushing negative values so the lowest positive confidences have the highest priority
-                    heapq.heappush(pq, Pair(graph.pdb, -confidence, mutations, graph.masked_res_id, graph.label))
+                    heapq.heappush(pq, Pair(graph.pdb, -confidence, mutations, confs, graph.masked_res_id, graph.label))
                     if len(pq) > locs:
                         # We are interested in top K least cofident predictions
                         heapq.heappop(pq)
@@ -197,18 +201,20 @@ def uncertainty_search(trainer, dataloader, locs=1, k=3):
     with open('mutations.csv', 'w', encoding='UTF8') as f:
         writer = csv.writer(f)
 
-        header = ['wildtype', 'confidence', 'mutations', 'mutation_position', 'mutation_codes']
+        header = ['wildtype', 'confidence', 'mutations', 'mutation_confidence', 'mutation_position', 'mutation_codes']
         # write the header
         writer.writerow(header)
         
         for wildtype, mutations in top_k.items():
             for pair in mutations:
+            
                 data = [
                     str(wildtype), 
                     -pair.confidence, 
-                    str([_codes(x) for x in pair.mutations]), 
+                    [_codes(x) for x in pair.mutations], 
+                    [x for x in pair.confs],
                     pair.masked_residue, 
-                    str([f'{pair.og_res}{pair.masked_residue}{_3to1(_codes(x))}' for x in pair.mutations])
+                    [f'{_3to1(_codes(pair.og_res))}{pair.masked_residue}{_3to1(_codes(x))}' for x in pair.mutations]
                 ]
             
             # write the data  
@@ -216,7 +222,7 @@ def uncertainty_search(trainer, dataloader, locs=1, k=3):
 
 
 # TODO STEP 6: recover the sequence 
-
 # TODO STEP 7: check against protein engineering benchmarks (ProteinGym)
 
+DATASET_PATH = '/Users/antoniaboca/ProteinGym_substitutions'
 
