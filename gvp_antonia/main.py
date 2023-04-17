@@ -7,7 +7,13 @@ import random
 import pickle
 import signal
 
-# import lovely_tensors as lt
+import sys
+
+# Get the path to the parent directory of the gvp directory
+gvp_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+
+# Add the parent directory of gvp to the module search path
+sys.path.append(gvp_dir)
 
 import torch
 torch.multiprocessing.set_sharing_strategy('file_system')
@@ -25,14 +31,14 @@ from pytorch_lightning.callbacks import ModelCheckpoint, LearningRateMonitor
 from pytorch_lightning.plugins.environments import SLURMEnvironment
 
 # from atom3d.datasets import LMDBDataset
-from lmdb_dataset import LMDBDataset
+from gvp_antonia.lmdb_dataset import LMDBDataset
 
-from models.equiformer import GraphAttentionTransformer
-from models.gvp import RES_GVP
-from models.mace import RES_MACEModel
-from models.eqgat import RES_EQGATModel
+# from gvp_antonia.models.equiformer import GraphAttentionTransformer
+from gvp_antonia.models.gvp import RES_GVP
+# from gvp_antonia.models.mace import RES_MACEModel
+from gvp_antonia.models.eqgat import RES_EQGATModel
 
-from protein_graph import AtomGraphBuilder, _element_alphabet
+from gvp_antonia.protein_graph import AtomGraphBuilder, _element_alphabet
 
 DATASET_PATH = '/Users/antoniaboca/Downloads/split-by-cath-topology/data'
 CHECKPOINT_PATH = os.environ.get("PATH_CHECKPOINT", "saved_models/")
@@ -74,7 +80,7 @@ _amino_acids = lambda x: {
 _DEFAULT_V_DIM = (100, 16)
 _DEFAULT_E_DIM = (32, 1)
 
-MODEL_SELECT = {'gvp': RES_GVP, 'mace': RES_MACEModel, 'eqgat': RES_EQGATModel, 'equiformer': GraphAttentionTransformer }
+MODEL_SELECT = {'gvp': RES_GVP, 'mace': None, 'eqgat': RES_EQGATModel, 'equiformer': None }
 
 class ModelWrapper(pl.LightningModule):
     def __init__(self, 
