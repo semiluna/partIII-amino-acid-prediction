@@ -201,24 +201,26 @@ def uncertainty_search(trainer, dataloader, locs=1, k=3):
     with open('mutations.csv', 'w', encoding='UTF8') as f:
         writer = csv.writer(f)
 
-        header = ['wildtype', 'confidence', 'mutations', 'mutation_confidence', 'mutation_position', 'mutation_codes']
+        header = ['wildtype', 'og_confidence', 'mutation_position', 'mutation_codes', 'mutation_confidence']
         # write the header
         writer.writerow(header)
         
+        # For every wildtype
         for wildtype, mutations in top_k.items():
+            # for every position in the original wildtype
             for pair in mutations:
+                # for every top k mutation on that location
+                for x, conf in zip(pair.mutations, pair.confs):
+                    data = [
+                        str(wildtype), 
+                        -pair.confidence, 
+                        pair.masked_residue, 
+                        f'{_3to1(_codes(pair.og_res))}{pair.masked_residue}{_3to1(_codes(x))}',
+                        conf,
+                    ]
             
-                data = [
-                    str(wildtype), 
-                    -pair.confidence, 
-                    [_codes(x) for x in pair.mutations], 
-                    [x for x in pair.confs],
-                    pair.masked_residue, 
-                    [f'{_3to1(_codes(pair.og_res))}{pair.masked_residue}{_3to1(_codes(x))}' for x in pair.mutations]
-                ]
-            
-            # write the data  
-            writer.writerow(data)
+                    # write the data  
+                    writer.writerow(data)
 
 
 # TODO STEP 6: recover the sequence 

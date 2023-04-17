@@ -14,7 +14,7 @@ import torch_geometric
 from atom3d.util.formats import bp_to_df, read_any
 from Bio.Data.IUPACData import protein_letters_3to1
 
-from proteins import STANDARD_AMINO_ACIDS, STANDARD_ELEMENTS
+from gvp_antonia.proteins import STANDARD_AMINO_ACIDS, STANDARD_ELEMENTS
 
 _aa_alphabet = {aa: i for i, aa in enumerate(STANDARD_AMINO_ACIDS)}
 _element_alphabet = {el: i for i, el in enumerate(STANDARD_ELEMENTS)}

@@ -10,16 +10,16 @@ from e3nn.nn.models.v2106.gate_points_message_passing import tp_path_exists
 import torch_geometric
 import math
 
-from models.equiform_utils.instance_norm import EquivariantInstanceNorm
-from models.equiform_utils.graph_norm import EquivariantGraphNorm
-from models.equiform_utils.layer_norm import EquivariantLayerNormV2
-from models.equiform_utils.fast_layer_norm import EquivariantLayerNormFast
-from models.equiform_utils.radial_func import RadialProfile
-from models.equiform_utils.tensor_product_rescale import (TensorProductRescale, LinearRS,
+from gvp_antonia.models.equiform_utils.instance_norm import EquivariantInstanceNorm
+from gvp_antonia.models.equiform_utils.graph_norm import EquivariantGraphNorm
+from gvp_antonia.models.equiform_utils.layer_norm import EquivariantLayerNormV2
+from gvp_antonia.models.equiform_utils.fast_layer_norm import EquivariantLayerNormFast
+from gvp_antonia.models.equiform_utils.radial_func import RadialProfile
+from gvp_antonia.models.equiform_utils.tensor_product_rescale import (TensorProductRescale, LinearRS,
     FullyConnectedTensorProductRescale, irreps2gate, sort_irreps_even_first)
-from models.equiform_utils.fast_activation import Activation, Gate
-from models.equiform_utils.drop import EquivariantDropout, EquivariantScalarsDropout, GraphDropPath
-from models.equiform_utils.gaussian_rbf import GaussianRadialBasisLayer
+from gvp_antonia.models.equiform_utils.fast_activation import Activation, Gate
+from gvp_antonia.models.equiform_utils.drop import EquivariantDropout, EquivariantScalarsDropout, GraphDropPath
+from gvp_antonia.models.equiform_utils.gaussian_rbf import GaussianRadialBasisLayer
 
 # for bessel radial basis
 # from ocpmodels.models.gemnet.layers.radial_basis import RadialBasis
