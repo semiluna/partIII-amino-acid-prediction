@@ -1,0 +1,31 @@
+\begin{figure}
+    \centering
+    \begin{tikzpicture}
+        % Graph
+        \node (x1) [circle, fill=red!20] {$\mathbf{x}_1$};
+        \node (x2) [circle, fill=blue!20, below of=x1, yshift=-1cm, xshift=-2cm] {$\mathbf{x}_2$};
+        \node (x3) [circle, fill=blue!20, below of=x1, yshift=-1cm, xshift=2cm] {$\mathbf{x}_3$};
+        \node (x4) [circle, fill=blue!20, below of=x1, yshfit=-1cm] {$\mathbf{x}_4$};
+        
+        \draw (x1) -- (x2);
+        \draw (x1) -- (x3);
+        \draw (x1) -- (x4);
+
+        % Messages
+        \node (m12) [circle, fill=green!30, above of=x1, yshift=1cm, xshift=-3cm] {$\mathbf{m}_{1,2}$};
+        \node (m13) [circle, fill=green!30, above of=x1, yshift=1cm, xshift=3cm] {$\mathbf{m}_{1,3}$};
+        \node (up1) [circle, fill=orange!30, above of=x1, yshift=2cm] {$\mathbf{u}_1$};
+
+        \draw [->, dashed, gray, line width=2pt] (x1) .. controls (0.25, 0.6) .. (up1);
+        \draw [->, line width=2.5pt] (up1) .. controls (-0.25, 0.6) .. (x1);
+        \draw [->, dashed, gray, line width=2pt] (x2) -- (m12);
+        \draw [->, dashed, gray, line width=2pt] (x1) -- (m12);
+
+        \draw [->, dashed, gray, line width=2pt] (x3) -- (m13);
+        \draw [->, dashed, gray, line width=2pt] (x1) -- (m13);
+
+        \draw [->, line width=2pt] (m12) -- (up1);
+        \draw [->, line width=2pt] (m13) -- (up1);
+    \end{tikzpicture}
+    \label{message_passing_fig}
+\end{figure}

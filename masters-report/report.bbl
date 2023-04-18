@@ -1,4 +1,4 @@
-\begin{thebibliography}{3}
+\begin{thebibliography}{6}
 \providecommand{\natexlab}[1]{#1}
 \providecommand{\url}[1]{\texttt{#1}}
 \expandafter\ifx\csname urlstyle\endcsname\relax
@@ -32,5 +32,24 @@ Raphael J.~L. Townshend, Martin V{\"{o}}gele, Patricia Suriana, Alexander
 \newblock {ATOM3D:} tasks on molecules in three dimensions.
 \newblock \emph{CoRR}, abs/2012.04035, 2020.
 \newblock URL \url{https://arxiv.org/abs/2012.04035}.
+
+\bibitem[Rosenblatt(1958)]{rosenblatt1958}
+F.~Rosenblatt.
+\newblock The perceptron: A probabilistic model for information storage and
+  organization in the brain.
+\newblock \emph{Psychological Review}, 1958.
+
+\bibitem[Kelley(1960)]{backpropagation1}
+Henry~J. Kelley.
+\newblock Gradient theory of optimal flight paths.
+\newblock \emph{ARS Journal. 30 (10): 947-954}, 1960.
+
+\bibitem[Gilmer et~al.(2017)Gilmer, Schoenholz, Riley, Vinyals, and
+  Dahl]{gilmer2017neural}
+Justin Gilmer, Samuel~S Schoenholz, Patrick~F Riley, Oriol Vinyals, and
+  George~E Dahl.
+\newblock Neural message passing for quantum chemistry.
+\newblock In \emph{International conference on machine learning}, pages
+  1263--1272. PMLR, 2017.
 
 \end{thebibliography}
