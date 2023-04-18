@@ -91,13 +91,19 @@ The training process in neural networks involves two steps. First, the derivativ
 \textbf{Graph neural networks} (GNNs) are a type of neural network that operate on graphs and are able to capture structural information in the data by leveraging the existent relationships between entities. 
 All GNNs use some form of \textit{neural message passing}, where vector messages are exchanged between nodes and updated using a neural network \citep{gilmer2017neural}.
 
-Formally, for a given graph $\mathcal{G} = (\mathcal{V}, \mathcal{E})$, at message passing iteration $k$, a hidden embedding $\textbf{h}_u^{(k)}$ corresponds to each node $u \in \mathcal{V}$, and an update happens according to information aggregated from $u$'s graph neighbourhood $\mathcal{N}(u)$, as seen in Equation \ref{message-passing}.
+Formally, for a given graph $\mathcal{G} = (\mathcal{V}, \mathcal{E})$, at message passing iteration $k$, a hidden embedding $\textbf{h}_u^{(k)} \in \mathbb{R}^{F_k}$ corresponds to each node $u \in \mathcal{V}$. 
+The framework first creates a \textit{message} $\mathbf{m}_{u,v}$ between a node $u$ and its neighbour $v$ by using a message function $\psi^{(k)}: \mathbb{R}^{F_k}\times\mathbb{R}^{F_k} \rightarrow \mathbb{R}^{F_{k}'}$:
+\begin{equation}
+    \mathbf{m}_{u, v} = \psi^{(k)}\Big(\textbf{h}_{u}^{(k)}, \textbf{h}_v^{(k)}\Big)
+\end{equation}
+These messages are then aggregated using operation $\oplus^{(k)}$; 
+this operation is usually the sum or the average, but other versions exist as well. Note that in general function must be \textit{permutation invariant}, since the neighbours of a node $u$ do not have any intristic order.
+Finally, the aggregated message is combined with the node's own embedding $\mathbf{h}_u^{(k)}$ using function $\phi^{(k)}:\mathbb{R}^{F_k} \times \mathbb{R}^{F_{k}'} \rightarrow \mathbb{R}^{F_{k+1}}$, also called the \textit{update} function, as seen in Equation \ref{message-passing}:
 \begin{align}
-    \textbf{h}_u^{(k+1)} &= \text{UPDATE}^{(k)}(\textbf{h}_u^{(k+1)}, \text{AGGREGATE}^{(k)}(\{\textbf{h}_v^{(k+1)},\forall v\in \mathcal{N}(u)\}))\\ 
-    &=\text{UPDATE}^{(k)}(\textbf{h}_u^{(k+1)},\textbf{m}^{(k)}_{\mathcal{N}(u)})
+    \textbf{h}_u^{(k+1)} &= \phi^{(k)}\Big(\textbf{h}_u^{(k)}, \oplus_{v\in \mathcal{N}(u)}^{(k)}\mathbf{m}_{u,v}\Big)
 \label{message-passing}
 \end{align}
-Note that in general the $\text{AGGREGATE}$ function must be permutation-invariant. 
+
 A visual representation of the information flow can be seen in Figure \ref{message_passing_fig}.
 \input{figures/message_passing_fig.tex}
 \subsection{Equivariant Graph Neural Networks}
