@@ -27,11 +27,17 @@ from models.equiform_utils.gaussian_rbf import GaussianRadialBasisLayer
 _RESCALE = True
 _USE_BIAS = True
 
-# QM9
+# # QM9
+# _MAX_ATOM_TYPE = 9
+# # Statistics of QM9 with cutoff radius = 5
+# _AVG_NUM_NODES = 18.03065905448718
+# _AVG_DEGREE = 15.57930850982666
+
+# # RES
 _MAX_ATOM_TYPE = 9
-# Statistics of QM9 with cutoff radius = 5
-_AVG_NUM_NODES = 18.03065905448718
-_AVG_DEGREE = 15.57930850982666
+_AVG_NUM_NODES = 622.0
+_AVG_DEGREE = 16.0 # placeholder
+
 
 def get_norm_layer(norm_type):
     if norm_type == 'graph':
@@ -801,7 +807,7 @@ class GraphAttentionTransformer(torch.nn.Module):
         self.head = torch.nn.Sequential(
             LinearRS(self.irreps_feature, self.irreps_feature, rescale=_RESCALE), 
             Activation(self.irreps_feature, acts=[torch.nn.SiLU()]),
-            LinearRS(self.irreps_feature, o3.Irreps('1x0e'), rescale=_RESCALE)) 
+            LinearRS(self.irreps_feature, o3.Irreps('20x0e'), rescale=_RESCALE)) # MLP output head
         self.scale_scatter = ScaledScatter(_AVG_NUM_NODES)
         
         self.apply(self._init_weights)
@@ -898,7 +904,6 @@ class GraphAttentionTransformer(torch.nn.Module):
         if self.out_dropout is not None:
             node_features = self.out_dropout(node_features)
         outputs = self.head(node_features)
-        import ipdb; ipdb.set_trace()
         outputs = self.scale_scatter(outputs, batch, dim=0)
         
         if self.scale is not None:

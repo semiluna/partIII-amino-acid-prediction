@@ -265,12 +265,13 @@ def train(args):
 
     root_dir = os.path.join(CHECKPOINT_PATH, args.model)
     os.makedirs(root_dir, exist_ok=True)
-    if args.resume_checkpoint is None:
-        wandb_logger = WandbLogger(project='part3-res-prediction-diss')
-    else:
-        wandb_logger = WandbLogger(project='part3-res-prediction-diss', id=args.wandb_id, resume='must')
+    wandb_logger = None
+    if not args.no_wandb:
+        if args.resume_checkpoint is None:
+            wandb_logger = WandbLogger(project='part3-res-prediction-diss')
+        else:
+            wandb_logger = WandbLogger(project='part3-res-prediction-diss', id=args.wandb_id, resume='must')
 
-    # lt.monkey_patch()
     if args.gpus > 0:
         if args.slurm:
             plugins = [SLURMEnvironment(requeue_signal=signal.SIGHUP)]
@@ -282,7 +283,8 @@ def train(args):
             callbacks=[
                 ModelCheckpoint(mode="max", monitor="val_acc_on_epoch_end"), 
                 ModelCheckpoint(mode="max", monitor="epoch"), # saves last completed epoch 
-                LearningRateMonitor()],   
+                LearningRateMonitor()
+                ],   
             log_every_n_steps=1,
             max_epochs=args.epochs,
             accelerator='gpu',
@@ -298,7 +300,8 @@ def train(args):
             callbacks=[
                 ModelCheckpoint(mode="max", monitor="val_acc_on_epoch_end"),
                 ModelCheckpoint(mode="max", monitor="epoch"), # saves last completed epoch 
-                LearningRateMonitor()],
+                LearningRateMonitor()
+                ],
             log_every_n_steps=1,
             max_epochs=args.epochs,
             logger=wandb_logger
@@ -334,7 +337,7 @@ def main():
     parser.add_argument('--seed', type=int, default=42)
     parser.add_argument('--resume_checkpoint', type=str, default=None)
     parser.add_argument('--wandb_id', type=str, default=None)
-
+    parser.add_argument('--no_wandb', action='store_true')
     args = parser.parse_args()
     train(args)
 
