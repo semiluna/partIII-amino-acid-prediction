@@ -300,7 +300,7 @@ def train(args):
             callbacks=[
                 ModelCheckpoint(mode="max", monitor="val_acc_on_epoch_end"),
                 ModelCheckpoint(mode="max", monitor="epoch"), # saves last completed epoch 
-                LearningRateMonitor()
+                # LearningRateMonitor()
                 ],
             log_every_n_steps=1,
             max_epochs=args.epochs,

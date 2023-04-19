@@ -742,7 +742,7 @@ class GraphAttentionTransformer(torch.nn.Module):
     def __init__(self,
         example,
         dropout,
-        irreps_in='5x0e',
+        irreps_in='9x0e',
         irreps_node_embedding='128x0e+64x1e+32x2e', n_layers=6,
         irreps_node_attr='1x0e', irreps_sh='1x0e+1x1e+1x2e',
         max_radius=5.0,
@@ -868,14 +868,14 @@ class GraphAttentionTransformer(torch.nn.Module):
         return set(no_wd_list)
         
 
-    def forward(self, batch) -> torch.Tensor:
+    def forward(self, graph) -> torch.Tensor:
         
         # edge_src, edge_dst = radius_graph(pos, r=self.max_radius, batch=batch,
         #     max_num_neighbors=1000)
         # edge_vec = pos.index_select(0, edge_src) - pos.index_select(0, edge_dst)
-        coords, node_atom = batch.x, batch.node_type
-        edge_src, edge_dst = batch.edge_index[0], batch.edge_index[1]
-        batch = batch.batch
+        coords, node_atom = graph.x, graph.node_type
+        edge_src, edge_dst = graph.edge_index[0], graph.edge_index[1]
+        batch = graph.batch
         
         edge_vec = coords[edge_src] - coords[edge_dst]
 
@@ -904,9 +904,11 @@ class GraphAttentionTransformer(torch.nn.Module):
         if self.out_dropout is not None:
             node_features = self.out_dropout(node_features)
         outputs = self.head(node_features)
-        outputs = self.scale_scatter(outputs, batch, dim=0)
-        
+        # outputs = self.scale_scatter(outputs, batch, dim=0)
+
+        subset_idx = graph.ca_idx + graph.ptr[:-1]
+
         if self.scale is not None:
             outputs = self.scale * outputs
 
-        return outputs
+        return outputs[subset_idx]
