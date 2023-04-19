@@ -1240,6 +1240,10 @@ INPUT ./figures/message_passing_fig.tex
 INPUT figures/message_passing_fig.tex
 INPUT ./figures/message_passing_fig.tex
 INPUT figures/message_passing_fig.tex
+INPUT ./figures/egnn.tex
+INPUT figures/egnn.tex
+INPUT ./figures/egnn.tex
+INPUT figures/egnn.tex
 INPUT ./chapters/related_work.tex
 INPUT chapters/related_work.tex
 INPUT ./chapters/related_work.tex

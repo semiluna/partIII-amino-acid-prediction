@@ -1,12 +1,12 @@
 # Fdb version 3
-["bibtex report"] 1681829649 "report.aux" "report.bbl" "report" 1681829650
+["bibtex report"] 1681846785 "report.aux" "report.bbl" "report" 1681846805
   "/opt/homebrew/Cellar/texlive/20220321_3/share/texmf-dist/bibtex/bst/natbib/unsrtnat.bst" 1647894602 24550 a41a6405f4de768c43e871d9fbce2bc8 ""
   "reference.bib" 1681823142 4120 575e18bb9accba639004a42326819dfa ""
-  "report.aux" 1681829650 7204 51cf8278465c9ed8c8e5a1ec8c84aadd "pdflatex"
+  "report.aux" 1681846804 7204 51cf8278465c9ed8c8e5a1ec8c84aadd "pdflatex"
   (generated)
   "report.bbl"
   "report.blg"
-["pdflatex"] 1681829649 "/Users/antoniaboca/partIII-amino-acid-prediction/masters-report/report.tex" "report.pdf" "report" 1681829650
+["pdflatex"] 1681846803 "/Users/antoniaboca/partIII-amino-acid-prediction/masters-report/report.tex" "report.pdf" "report" 1681846805
   "/Users/antoniaboca/partIII-amino-acid-prediction/masters-report/report.tex" 1680367430 14501 485db65f25212a4ba9691406833a8572 ""
   "/opt/homebrew/Cellar/texlive/20220321_3/share/texmf-dist/fonts/map/fontname/texfonts.map" 1647894602 3524 cb3e574dea2d1052e39280babc910dc8 ""
   "/opt/homebrew/Cellar/texlive/20220321_3/share/texmf-dist/fonts/map/pdftex/updmap/pdftex.map" 1647894602 4385071 4481eb56d8dc7e3e247ed9a139c582cd ""
@@ -232,7 +232,7 @@
   "/opt/homebrew/Cellar/texlive/20220321_3/share/texmf-dist/tex/latex/yhmath/yhmath.sty" 1647894602 4859 0d87ecb9c52cb398cf8866a2c0fb9d8d ""
   "/opt/homebrew/Cellar/texlive/20220321_3/share/texmf-dist/web2c/texmf.cnf" 1647894602 40174 4e2f94c7b252db2ad3c0cfdef6912ab3 ""
   "/opt/homebrew/Cellar/texlive/20220321_3/share/texmf-var/web2c/pdftex/pdflatex.fmt" 1647894602 2826557 3e645ef023e114e50e3f9051cb6a1bbb ""
-  "chapters/background.tex" 1681829218 9016 2923c56bb9d539960c87e5f3f1d2d0d4 ""
+  "chapters/background.tex" 1681844885 9041 28922f9fd08b0d8223f58b7500fddf5f ""
   "chapters/conclusion.tex" 0 -1 0 ""
   "chapters/design_implementation.tex" 0 -1 0 ""
   "chapters/evaluation.tex" 0 -1 0 ""
@@ -240,14 +240,15 @@
   "figures/1kda_closeup.png" 1679867245 380425 d71ba9314a2ff9a3ac970083918330a0 ""
   "figures/1kda_example.png" 1679867167 393373 8c089cde2ff27082f86efb3260066066 ""
   "figures/amino-acid.png" 1680272151 110197 020277f7e9ba4778f2d222411349721e ""
+  "figures/egnn.tex" 1681846803 1660 2c9bf655e0cb0aaf2e9b8ac67931f2ec ""
   "figures/message_passing_fig.tex" 1681829647 2558 f7f815da7cdc48aefed0dcf9438051e9 ""
   "logo-dcst-colour.pdf" 1652691732 68825 5fe5fe17b98d3d0947520538c732bbbf ""
   "packages.tex" 1681825834 1452 681eb47800a1855c9e92b57ae902e009 ""
-  "report.aux" 1681829650 7204 51cf8278465c9ed8c8e5a1ec8c84aadd "pdflatex"
-  "report.bbl" 1681829649 2396 87290671b3896e42edc79785919d513d "bibtex report"
-  "report.out" 1681829650 2588 88614dbbe058e625f1ba84f11508f01b "pdflatex"
+  "report.aux" 1681846804 7204 51cf8278465c9ed8c8e5a1ec8c84aadd "pdflatex"
+  "report.bbl" 1681846785 2396 87290671b3896e42edc79785919d513d "bibtex report"
+  "report.out" 1681846804 2588 88614dbbe058e625f1ba84f11508f01b "pdflatex"
   "report.tex" 1680367430 14501 485db65f25212a4ba9691406833a8572 ""
-  "report.toc" 1681829650 1449 616918625405d32c490e3644b160e79a "pdflatex"
+  "report.toc" 1681846804 1449 616918625405d32c490e3644b160e79a "pdflatex"
   (generated)
   "report.aux"
   "report.log"
