@@ -124,7 +124,7 @@ class ModelWrapper(pl.LightningModule):
         acc = torch.sum(torch.argmax(out, dim=-1) == labels)
         self.log('train_loss', loss)
 
-        return {'loss': loss, 'acc': acc, 'n_graphs': len(labels)}
+        return {'loss': loss, 'acc': acc, 'n_graphs': len(labels), 'id': graph.ensemble }
     
     def training_epoch_end(self, outputs):
         correct_graphs = 0
@@ -232,7 +232,7 @@ class RESDataset(IterableDataset):
             for sub in item['labels'][:limit].itertuples():
                 _, num, aa = sub.subunit.split('_')
                 num, aa = int(num), _amino_acids(aa)
-                if aa == 20:
+                if aa >= 20:
                     continue
                 assert aa is not None
 
