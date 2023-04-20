@@ -120,6 +120,7 @@ class ModelWrapper(pl.LightningModule):
     def training_step(self, graph, batch_idx):
         out = self.model(graph)
         labels = graph.label.to(self.device)
+        assert (labels < 20).all()
         loss = self.loss_fn(out, labels)
         acc = torch.sum(torch.argmax(out, dim=-1) == labels)
         self.log('train_loss', loss)
