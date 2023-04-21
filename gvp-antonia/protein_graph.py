@@ -20,6 +20,17 @@ _aa_alphabet = {aa: i for i, aa in enumerate(STANDARD_AMINO_ACIDS)}
 _element_alphabet = {el: i for i, el in enumerate(STANDARD_ELEMENTS)}
 _3to1 = lambda aa: protein_letters_3to1[aa.capitalize()]
 
+_element_mapping = lambda x: {
+    'H' : 0,
+    'C' : 1,
+    'N' : 2,
+    'O' : 3,
+    'F' : 4,
+    'S' : 5,
+    'Cl': 6, 'CL': 6,
+    'P' : 7
+}.get(x, 8)
+
 
 class ProteinGraphBuilder:
     def __init__(
@@ -87,7 +98,7 @@ class AtomGraphBuilder(ProteinGraphBuilder):
     """
 
     def __init__(
-        self, node_alphabet: dict[str, int] = _element_alphabet, edge_cutoff: float = 4.5, **kwargs
+        self, node_alphabet: dict[str, int] = _element_mapping, edge_cutoff: float = 4.5, **kwargs
     ):
         super().__init__(node_alphabet, edge_cutoff, **kwargs)
 

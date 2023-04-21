@@ -196,7 +196,7 @@ class ModelWrapper(pl.LightningModule):
 class RESDataset(IterableDataset):
     def __init__(self, dataset_path, max_len=None, sample_per_item=None, shuffle=False):
         self.dataset = LMDBDataset(dataset_path)
-        self.graph_builder = AtomGraphBuilder(_element_alphabet)
+        self.graph_builder = AtomGraphBuilder(_element_mapping)
         self.shuffle = shuffle
         self.max_len = max_len
         self.sample_per_item = sample_per_item

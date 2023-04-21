@@ -808,7 +808,7 @@ class GraphAttentionTransformer(torch.nn.Module):
             LinearRS(self.irreps_feature, self.irreps_feature, rescale=_RESCALE), 
             Activation(self.irreps_feature, acts=[torch.nn.SiLU()]),
             LinearRS(self.irreps_feature, o3.Irreps('20x0e'), rescale=_RESCALE)) # MLP output head
-        self.scale_scatter = ScaledScatter(_AVG_NUM_NODES)
+        # self.scale_scatter = ScaledScatter(_AVG_NUM_NODES)
         
         self.apply(self._init_weights)
         
@@ -846,26 +846,26 @@ class GraphAttentionTransformer(torch.nn.Module):
             torch.nn.init.constant_(m.weight, 1.0)
             
                           
-    @torch.jit.ignore
-    def no_weight_decay(self):
-        no_wd_list = []
-        named_parameters_list = [name for name, _ in self.named_parameters()]
-        for module_name, module in self.named_modules():
-            if (isinstance(module, torch.nn.Linear) 
-                or isinstance(module, torch.nn.LayerNorm)
-                or isinstance(module, EquivariantLayerNormV2)
-                or isinstance(module, EquivariantInstanceNorm)
-                or isinstance(module, EquivariantGraphNorm)
-                or isinstance(module, GaussianRadialBasisLayer)):
-                # or isinstance(module, RadialBasis)):
-                for parameter_name, _ in module.named_parameters():
-                    if isinstance(module, torch.nn.Linear) and 'weight' in parameter_name:
-                        continue
-                    global_parameter_name = module_name + '.' + parameter_name
-                    assert global_parameter_name in named_parameters_list
-                    no_wd_list.append(global_parameter_name)
+    # @torch.jit.ignore
+    # def no_weight_decay(self):
+    #     no_wd_list = []
+    #     named_parameters_list = [name for name, _ in self.named_parameters()]
+    #     for module_name, module in self.named_modules():
+    #         if (isinstance(module, torch.nn.Linear) 
+    #             or isinstance(module, torch.nn.LayerNorm)
+    #             or isinstance(module, EquivariantLayerNormV2)
+    #             or isinstance(module, EquivariantInstanceNorm)
+    #             or isinstance(module, EquivariantGraphNorm)
+    #             or isinstance(module, GaussianRadialBasisLayer)):
+    #             # or isinstance(module, RadialBasis)):
+    #             for parameter_name, _ in module.named_parameters():
+    #                 if isinstance(module, torch.nn.Linear) and 'weight' in parameter_name:
+    #                     continue
+    #                 global_parameter_name = module_name + '.' + parameter_name
+    #                 assert global_parameter_name in named_parameters_list
+    #                 no_wd_list.append(global_parameter_name)
                     
-        return set(no_wd_list)
+    #     return set(no_wd_list)
         
 
     def forward(self, graph) -> torch.Tensor:
