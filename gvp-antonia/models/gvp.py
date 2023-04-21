@@ -21,6 +21,7 @@ s_V = Tuple[torch.Tensor, torch.Tensor]
 
 _DEFAULT_V_DIM = (100, 16)
 _DEFAULT_E_DIM = (32, 1)
+_NUM_ATOM_TYPES = 9
 
 class RES_GVP(nn.Module):
     def __init__(self, example, dropout, **model_args):
@@ -387,7 +388,7 @@ class GVPNetwork(nn.Module):
             x.edge_v.shape[-2] if "edge_v" in x else 0,
         )
         if "n_node_types" not in kwargs.keys():
-            kwargs["n_node_types"] = x.node_type.max().item() + 1
+            kwargs["n_node_types"] = _NUM_ATOM_TYPES
             # _logger.warning(
             #     "n_node_types not specified, using number of node types in data: %d",
             #     kwargs["n_node_types"],
