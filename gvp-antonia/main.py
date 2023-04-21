@@ -88,7 +88,7 @@ class ModelWrapper(pl.LightningModule):
     ):
         super().__init__()
         model_cls = MODEL_SELECT[model_name]
-        self.model = model_cls(example, dropout, **model_args)
+        self.model = model_cls(example, dropout, device=self.device, **model_args)
         self.lr = lr
         self.patience_scheduler = patience_scheduler
         self.factor_scheduler = factor_scheduler

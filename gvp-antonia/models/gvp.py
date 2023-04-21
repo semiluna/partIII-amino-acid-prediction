@@ -49,6 +49,7 @@ class GVP(nn.Module):
         activations=(F.relu, torch.sigmoid),
         vector_gate: bool = False,
         eps: float = 1e-4,
+        device = torch.device('cpu'),
     ) -> None:
         super().__init__()
         in_scalar, in_vector = in_dims
@@ -61,8 +62,8 @@ class GVP(nn.Module):
             self.sigma_plus = nn.Identity()
 
         self.h = max(in_vector, out_vector)
-        self.W_h = nn.Parameter(torch.empty((self.h, in_vector)))
-        self.W_mu = nn.Parameter(torch.empty((out_vector, self.h)))
+        self.W_h = nn.Parameter(torch.empty((self.h, in_vector), device=device))
+        self.W_mu = nn.Parameter(torch.empty((out_vector, self.h), device=device))
 
         self.W_m = nn.Linear(self.h + in_scalar, out_scalar)
         self.v = in_vector
@@ -164,6 +165,7 @@ class GVPMessagePassing(MessagePassing, ABC):
         attention: bool = True,
         aggr: str = "add",
         normalization_factor: float = 1.0,
+        device = torch.device('cpu'),
     ):
         super().__init__(aggr)
         if hidden_dims is None:
@@ -184,10 +186,10 @@ class GVPMessagePassing(MessagePassing, ABC):
         self.edge_gvps = nn.Sequential(
             GVP_(
                 (2 * in_scalar + edge_scalar, 2 * in_vector + edge_vector),
-                hidden_dims,
+                hidden_dims, device=device,
             ),
-            GVP_(hidden_dims, hidden_dims),
-            GVP_(hidden_dims, out_dims, activations=(None, None)),
+            GVP_(hidden_dims, hidden_dims, device=device),
+            GVP_(hidden_dims, out_dims, activations=(None, None), device=device),
         )
 
         self.attention = attention
@@ -196,6 +198,7 @@ class GVPMessagePassing(MessagePassing, ABC):
                 out_dims,
                 (1, 0),
                 activations=(torch.sigmoid, None),
+                device=device,
             )
 
     def forward(self, x: s_V, edge_index: torch.Tensor, edge_attr: torch.Tensor) -> s_V:
@@ -254,6 +257,7 @@ class GVPConvLayer(GVPMessagePassing, ABC):
         attention=True,
         aggr: str = "add",
         normalization_factor: float = 1.0,
+        device = torch.device('cpu'),
     ):
         super().__init__(
             node_dims,
@@ -265,6 +269,7 @@ class GVPConvLayer(GVPMessagePassing, ABC):
             attention=attention,
             aggr=aggr,
             normalization_factor=normalization_factor,
+            device=device,
         )
         self.residual = residual
         self.drop_rate = drop_rate
@@ -273,8 +278,8 @@ class GVPConvLayer(GVPMessagePassing, ABC):
         self.dropout = nn.ModuleList([GVPDropout(drop_rate) for _ in range(2)])
 
         self.ff_func = nn.Sequential(
-            GVP_(node_dims, node_dims),
-            GVP_(node_dims, node_dims, activations=(None, None)),
+            GVP_(node_dims, node_dims, device=device),
+            GVP_(node_dims, node_dims, activations=(None, None), device=device),
         )
         self.residual = residual
 
@@ -316,6 +321,7 @@ class GVPNetwork(nn.Module):
         activations=(F.silu, None),
         vector_gate: bool = True,
         eps=1e-4,
+        device = torch.device('cpu'),
     ) -> None:
         super().__init__()
         hidden_edge_dims = _DEFAULT_E_DIM
@@ -327,7 +333,8 @@ class GVPNetwork(nn.Module):
         self.embedding_in = nn.Sequential(
             GVPLayerNorm(in_dims),
             GVP(
-                in_dims, hidden_dims, activations=(None, None), vector_gate=vector_gate
+                in_dims, hidden_dims, activations=(None, None), vector_gate=vector_gate, 
+                device=device
             ),
         )
 
@@ -335,7 +342,8 @@ class GVPNetwork(nn.Module):
         self.embedding_out = nn.Sequential(
             GVPLayerNorm(hidden_dims),
             GVP(
-                hidden_dims, (out_dims, 0), activations=activations, vector_gate=vector_gate
+                hidden_dims, (out_dims, 0), activations=activations, vector_gate=vector_gate,
+                device=device,
             ),
         )
         self.edge_embedding = nn.Sequential(
@@ -345,6 +353,7 @@ class GVPNetwork(nn.Module):
                 hidden_edge_dims,
                 activations=(None, None),
                 vector_gate=vector_gate,
+                device=device,
             ),
         )
 
@@ -359,6 +368,7 @@ class GVPNetwork(nn.Module):
                     attention=attention,
                     aggr=aggr,
                     normalization_factor=normalization_factor,
+                    device=device
                 )
                 for _ in range(n_layers)
             ]
