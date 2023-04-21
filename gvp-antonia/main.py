@@ -291,7 +291,7 @@ def train(args):
             accelerator='gpu',
             devices=args.gpus,
             num_nodes=args.num_nodes,
-            strategy='ddp',
+            #strategy='ddp',
             logger=wandb_logger,
             plugins=plugins
         ) 
