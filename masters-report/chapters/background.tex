@@ -66,17 +66,46 @@ These datasets have been tailored to function as a benchmark for machine learnin
 \begin{figure}
     \centering
     \subfigure[The 1KDA molecule. The orange structure represents one amino acid residue.]{
-        \includegraphics[scale=0.15]{figures/1kda_example.png}
+        \includegraphics[scale=0.2]{figures/1kda_example.png}
     }
     \hspace{0.3in}
     \subfigure[A close-up of the atomic environment around the orage amino-acid.]{
-        \includegraphics[scale=0.15]{figures/1kda_closeup.png}
+        \includegraphics[scale=0.2]{figures/1kda_closeup.png}
     }
     
     \caption{Example of a PDB molecule.}
     \label{pdb}
 \end{figure}
 \section{Machine learning background}
+First proposed by \citet{rosenblatt1958}, neural networks are a type of machine learning model that is inspired by the structure and function of the human brain. 
+They are used for various tasks, such as image and speech recognition, natural language processing, and biomolecular prediction among others.
+
+At a high level, neural networks consist of interconnected nodes or neurons organised into layers. Each neuron receives input data, applies a mathematical operation to it, and produces an output. These operations are typically weighted sums followed by activation functions that introduce non-linearity into the model. 
+The outputs from one layer of neurons serve as inputs to the next layer, forming a hierarchical structure. The resulting predictions made by the model are then scored using a \textit{loss function}.
+
+The training process in neural networks involves two steps. First, the derivative of the loss function with respect to each weight is computed, using the \textit{backpropagation algorithm} \citep{backpropagation1}. This provides the gradient information needed for the next step. The second stage is the weight update, typically done using a gradient descent technique. 
+
 \subsection{Graph Neural Networks}
+{\color{blue}Maybe flesh this out later.}
+
+\textbf{Graph neural networks} (GNNs) are a type of neural network that operate on graphs and are able to capture structural information in the data by leveraging the existent relationships between entities. 
+All GNNs use some form of \textit{neural message passing}, where vector messages are exchanged between nodes and updated using a neural network \citep{gilmer2017neural}.
+
+Formally, for a given graph $\mathcal{G} = (\mathcal{V}, \mathcal{E})$, at message passing iteration $k$, a hidden embedding $\textbf{h}_u^{(k)} \in \mathbb{R}^{F_k}$ corresponds to each node $u \in \mathcal{V}$. 
+The framework first creates a \textit{message} $\mathbf{m}_{u,v}$ between a node $u$ and its neighbour $v$ by using a message function $\psi^{(k)}: \mathbb{R}^{F_k}\times\mathbb{R}^{F_k} \rightarrow \mathbb{R}^{F_{k}'}$:
+\begin{equation}
+    \mathbf{m}_{u, v} = \psi^{(k)}\Big(\textbf{h}_{u}^{(k)}, \textbf{h}_v^{(k)}\Big)
+\end{equation}
+These messages are then aggregated using operation $\oplus^{(k)}$; 
+this operation is usually the sum or the average, but other versions exist as well. Note that in general function must be \textit{permutation invariant}, since the neighbours of a node $u$ do not have any intristic order.
+Finally, the aggregated message is combined with the node's own embedding $\mathbf{h}_u^{(k)}$ using function $\phi^{(k)}:\mathbb{R}^{F_k} \times \mathbb{R}^{F_{k}'} \rightarrow \mathbb{R}^{F_{k+1}}$, also called the \textit{update} function, as seen in Equation \ref{message-passing}:
+\begin{align}
+    \textbf{h}_u^{(k+1)} &= \phi^{(k)}\Big(\textbf{h}_u^{(k)}, \oplus_{v\in \mathcal{N}(u)}^{(k)}\mathbf{m}_{u,v}\Big)
+\label{message-passing}
+\end{align}
+
+A visual representation of the information flow can be seen in Figure \ref{message_passing_fig}.
+\input{figures/message_passing_fig.tex}
 \subsection{Equivariant Graph Neural Networks}
+\input{figures/egnn.tex}
 \subsection{Representing residues as graphs}

@@ -1,9 +1,11 @@
 */wandb/*
 gvp-simon
-gvp-pytorch
+# gvp-pytorch
 *__pycache__*
 .DS_Store
 
+wandb
+saved_models
 part3-res-prediction-diss/
 */saved_models/*
 */lighting_logs/*
