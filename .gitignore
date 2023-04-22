@@ -3,7 +3,7 @@ gvp-simon
 # gvp-pytorch
 *__pycache__*
 .DS_Store
-
+models
 wandb
 saved_models
 part3-res-prediction-diss/

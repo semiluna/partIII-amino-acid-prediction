@@ -33,7 +33,7 @@ from pytorch_lightning.plugins.environments import SLURMEnvironment
 # from atom3d.datasets import LMDBDataset
 from gvp_antonia.lmdb_dataset import LMDBDataset
 
-# from gvp_antonia.models.equiformer import GraphAttentionTransformer
+from gvp_antonia.models.equiformer import GraphAttentionTransformer
 from gvp_antonia.models.gvp import RES_GVP
 # from gvp_antonia.models.mace import RES_MACEModel
 from gvp_antonia.models.eqgat import RES_EQGATModel
@@ -80,7 +80,7 @@ _amino_acids = lambda x: {
 _DEFAULT_V_DIM = (100, 16)
 _DEFAULT_E_DIM = (32, 1)
 
-MODEL_SELECT = {'gvp': RES_GVP, 'mace': None, 'eqgat': RES_EQGATModel, 'equiformer': None }
+MODEL_SELECT = {'gvp': RES_GVP, 'mace': None, 'eqgat': RES_EQGATModel, 'equiformer': GraphAttentionTransformer }
 
 class ModelWrapper(pl.LightningModule):
     def __init__(self, 
