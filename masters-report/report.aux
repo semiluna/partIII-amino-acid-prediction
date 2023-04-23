@@ -26,57 +26,65 @@
 \@writefile{lof}{\addvspace {10\p@ }}
 \@writefile{lot}{\addvspace {10\p@ }}
 \@writefile{toc}{\contentsline {section}{\numberline {2.1}Biological background}{6}{section.2.1}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {2.1.1}Proteins}{6}{subsection.2.1.1}\protected@file@percent }
-\@writefile{lof}{\contentsline {figure}{\numberline {2.1}{\ignorespaces The basic chemical structure of an amino acid. Carbon atoms are black, Oxygen is dark grey, Nitrogen light grey, and hydrogen white. Image taken from \cite  {hunter1993molecular}.}}{7}{figure.2.1}\protected@file@percent }
-\newlabel{fig:amino-acid}{{2.1}{7}{The basic chemical structure of an amino acid. Carbon atoms are black, Oxygen is dark grey, Nitrogen light grey, and hydrogen white. Image taken from \cite {hunter1993molecular}}{figure.2.1}{}}
-\pgfsyspdfmark {pgfid2}{13959472}{35713977}
-\pgfsyspdfmark {pgfid3}{21273876}{35713977}
-\pgfsyspdfmark {pgfid4}{15459936}{28829577}
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.1.1}Amino-acid residues}{6}{subsection.2.1.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.1.2}Proteins}{6}{subsection.2.1.2}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {2.1}{\ignorespaces The basic chemical structure of an amino acid. Carbon atoms are black, Oxygen is dark grey, Nitrogen light grey, and hydrogen white. Image taken from \cite  {hunter1993molecular}.}}{6}{figure.2.1}\protected@file@percent }
+\newlabel{fig:amino-acid}{{2.1}{6}{The basic chemical structure of an amino acid. Carbon atoms are black, Oxygen is dark grey, Nitrogen light grey, and hydrogen white. Image taken from \cite {hunter1993molecular}}{figure.2.1}{}}
+\pgfsyspdfmark {pgfid2}{13959472}{49317505}
+\pgfsyspdfmark {pgfid3}{21273876}{49317505}
+\pgfsyspdfmark {pgfid4}{15459936}{42433105}
 \@writefile{lof}{\contentsline {figure}{\numberline {2.2}{\ignorespaces Two amino-acids are chained together through a peptide bond. The chemical reaction releases a water molecule ($\text  {H}_2\text  {O}$) in the process.}}{7}{figure.2.2}\protected@file@percent }
 \newlabel{fig:residue}{{2.2}{7}{Two amino-acids are chained together through a peptide bond. The chemical reaction releases a water molecule ($\text {H}_2\text {O}$) in the process}{figure.2.2}{}}
+\@writefile{toc}{\contentsline {paragraph}{Biological assemblies.}{7}{section*.4}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{Protein engineering.}{7}{section*.5}\protected@file@percent }
+\newlabel{homomer}{{2.3(a)}{8}{Subfigure 2 2.3(a)}{subfigure.2.3.1}{}}
+\newlabel{sub@homomer}{{(a)}{8}{Subfigure 2 2.3(a)\relax }{subfigure.2.3.1}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {2.3}{\ignorespaces Example of (a) one homomer and (b) the homomeric assembly it forms.}}{8}{figure.2.3}\protected@file@percent }
+\@writefile{lof}{\contentsline {subfigure}{\numberline{(a)}{\ignorespaces {The 2UXY molecule. It is formed of a single chain of amino-acid residues.}}}{8}{figure.2.3}\protected@file@percent }
+\@writefile{lof}{\contentsline {subfigure}{\numberline{(b)}{\ignorespaces {The \textit {aliphatic amidase} assembly, formed of 6 copies of the 2UXY chain.}}}{8}{figure.2.3}\protected@file@percent }
+\newlabel{assembly}{{2.3}{8}{Example of (a) one homomer and (b) the homomeric assembly it forms}{figure.2.3}{}}
+\@writefile{toc}{\contentsline {paragraph}{Protein representations.}{8}{section*.6}\protected@file@percent }
 \citation{Lu2022}
 \citation{atom-3d}
 \citation{rosenblatt1958}
-\@writefile{toc}{\contentsline {subsection}{\numberline {2.1.2}Residue identity prediction}{8}{subsection.2.1.2}\protected@file@percent }
-\@writefile{toc}{\contentsline {paragraph}{The ATOM3D dataset.}{8}{section*.4}\protected@file@percent }
-\@writefile{toc}{\contentsline {paragraph}{The PDB format.}{8}{section*.5}\protected@file@percent }
-\@writefile{toc}{\contentsline {section}{\numberline {2.2}Machine learning background}{8}{section.2.2}\protected@file@percent }
 \citation{backpropagation1}
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.1.3}Residue identity prediction}{9}{subsection.2.1.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {paragraph}{The ATOM3D dataset.}{9}{section*.7}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {2.2}Machine learning background}{9}{section.2.2}\protected@file@percent }
 \citation{gilmer2017neural}
-\@writefile{lof}{\contentsline {figure}{\numberline {2.3}{\ignorespaces Example of a PDB molecule.}}{9}{figure.2.3}\protected@file@percent }
-\@writefile{lof}{\contentsline {subfigure}{\numberline{(a)}{\ignorespaces {The 1KDA molecule. The orange structure represents one amino acid residue.}}}{9}{figure.2.3}\protected@file@percent }
-\@writefile{lof}{\contentsline {subfigure}{\numberline{(b)}{\ignorespaces {A close-up of the atomic environment around the orage amino-acid.}}}{9}{figure.2.3}\protected@file@percent }
-\newlabel{pdb}{{2.3}{9}{Example of a PDB molecule}{figure.2.3}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {2.2.1}Graph Neural Networks}{9}{subsection.2.2.1}\protected@file@percent }
-\@writefile{lof}{\contentsline {figure}{\numberline {2.4}{\ignorespaces Diagram of the information flow of Equation \ref  {message-passing}. Node $\mathbf  {x}_1$ has three neighbours coloured in blue. The messages between node $\mathbf  {x}_1$ and each of its neighbours are aggregated using operator $\oplus $; the result is used to update the embeddings of $\mathbf  {x}_1$. Note how in this diagram we are not interested in the edge between $\mathbf  {x}_2$ and $\mathbf  {x}_4$, since this is the update iteration for node 1.}}{10}{figure.2.4}\protected@file@percent }
-\newlabel{message_passing_fig}{{2.4}{10}{Diagram of the information flow of Equation \ref {message-passing}. Node $\mathbf {x}_1$ has three neighbours coloured in blue. The messages between node $\mathbf {x}_1$ and each of its neighbours are aggregated using operator $\oplus $; the result is used to update the embeddings of $\mathbf {x}_1$. Note how in this diagram we are not interested in the edge between $\mathbf {x}_2$ and $\mathbf {x}_4$, since this is the update iteration for node 1}{figure.2.4}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.2.1}Graph Neural Networks}{10}{subsection.2.2.1}\protected@file@percent }
 \newlabel{message-passing}{{2.2}{10}{Graph Neural Networks}{equation.2.2.2}{}}
 \@writefile{toc}{\contentsline {subsection}{\numberline {2.2.2}Equivariant Graph Neural Networks}{10}{subsection.2.2.2}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {2.2.3}Representing residues as graphs}{10}{subsection.2.2.3}\protected@file@percent }
-\@writefile{toc}{\contentsline {chapter}{\numberline {3}Related work}{11}{chapter.3}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {2.4}{\ignorespaces Diagram of the information flow of Equation \ref  {message-passing}. Node $\mathbf  {x}_1$ has three neighbours coloured in blue. The messages between node $\mathbf  {x}_1$ and each of its neighbours are aggregated using operator $\oplus $; the result is used to update the embeddings of $\mathbf  {x}_1$. Note how in this diagram we are not interested in the edge between $\mathbf  {x}_2$ and $\mathbf  {x}_4$, since this is the update iteration for node 1.}}{11}{figure.2.4}\protected@file@percent }
+\newlabel{message_passing_fig}{{2.4}{11}{Diagram of the information flow of Equation \ref {message-passing}. Node $\mathbf {x}_1$ has three neighbours coloured in blue. The messages between node $\mathbf {x}_1$ and each of its neighbours are aggregated using operator $\oplus $; the result is used to update the embeddings of $\mathbf {x}_1$. Note how in this diagram we are not interested in the edge between $\mathbf {x}_2$ and $\mathbf {x}_4$, since this is the update iteration for node 1}{figure.2.4}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.2.3}Equivariance formalism}{11}{subsection.2.2.3}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {2.5}{\ignorespaces Visual representation of rotation equivariance. If the input graph has nodes with 3D coordinates (represented by the green and red arrows) and is rotated by a certain degree, we expect that the output graph will be rotated in a predictible manner as well.}}{12}{figure.2.5}\protected@file@percent }
+\newlabel{equivariance}{{2.5}{12}{Visual representation of rotation equivariance. If the input graph has nodes with 3D coordinates (represented by the green and red arrows) and is rotated by a certain degree, we expect that the output graph will be rotated in a predictible manner as well}{figure.2.5}{}}
+\@writefile{toc}{\contentsline {paragraph}{Higher-order features and equivariance.}{12}{section*.8}\protected@file@percent }
+\@writefile{toc}{\contentsline {chapter}{\numberline {3}Related work}{13}{chapter.3}\protected@file@percent }
 \@writefile{lof}{\addvspace {10\p@ }}
 \@writefile{lot}{\addvspace {10\p@ }}
-\@writefile{toc}{\contentsline {chapter}{\numberline {4}Design and implementation}{12}{chapter.4}\protected@file@percent }
+\@writefile{toc}{\contentsline {chapter}{\numberline {4}Design and implementation}{14}{chapter.4}\protected@file@percent }
 \@writefile{lof}{\addvspace {10\p@ }}
 \@writefile{lot}{\addvspace {10\p@ }}
-\@writefile{toc}{\contentsline {chapter}{\numberline {5}Evaluation}{13}{chapter.5}\protected@file@percent }
+\@writefile{toc}{\contentsline {chapter}{\numberline {5}Evaluation}{15}{chapter.5}\protected@file@percent }
 \@writefile{lof}{\addvspace {10\p@ }}
 \@writefile{lot}{\addvspace {10\p@ }}
 \bibstyle{unsrtnat}
 \bibdata{reference}
-\@writefile{toc}{\contentsline {chapter}{\numberline {6}Summary and conclusions}{14}{chapter.6}\protected@file@percent }
+\@writefile{toc}{\contentsline {chapter}{\numberline {6}Summary and conclusions}{16}{chapter.6}\protected@file@percent }
 \@writefile{lof}{\addvspace {10\p@ }}
 \@writefile{lot}{\addvspace {10\p@ }}
-\newlabel{lastcontentpage}{{6}{14}{Summary and conclusions}{chapter.6}{}}
+\newlabel{lastcontentpage}{{6}{16}{Summary and conclusions}{chapter.6}{}}
 \bibcite{hunter1993molecular}{{1}{1993}{{Hunter}}{{}}}
 \bibcite{Lu2022}{{2}{2022}{{Lu et~al.}}{{Lu, Diaz, Czarnecki, Zhu, Kim, Shroff, Acosta, Alexander, Cole, Zhang, Lynd, Ellington, and Alper}}}
 \bibcite{atom-3d}{{3}{2020}{{Townshend et~al.}}{{Townshend, V{\"{o}}gele, Suriana, Derry, Powers, Laloudakis, Balachandar, Anderson, Eismann, Kondor, Altman, and Dror}}}
 \bibcite{rosenblatt1958}{{4}{1958}{{Rosenblatt}}{{}}}
 \bibcite{backpropagation1}{{5}{1960}{{Kelley}}{{}}}
 \bibcite{gilmer2017neural}{{6}{2017}{{Gilmer et~al.}}{{Gilmer, Schoenholz, Riley, Vinyals, and Dahl}}}
-\@writefile{toc}{\contentsline {chapter}{\numberline {A}Technical details, proofs, etc.}{16}{appendix.A}\protected@file@percent }
+\@writefile{toc}{\contentsline {chapter}{\numberline {A}Technical details, proofs, etc.}{18}{appendix.A}\protected@file@percent }
 \@writefile{lof}{\addvspace {10\p@ }}
 \@writefile{lot}{\addvspace {10\p@ }}
-\@writefile{toc}{\contentsline {section}{\numberline {A.1}Lorem ipsum}{16}{section.A.1}\protected@file@percent }
-\@writefile{toc}{\contentsline {section}{\numberline {A.2}Homo sapiens non urinat in ventum}{16}{section.A.2}\protected@file@percent }
-\gdef \@abspage@last{19}
+\@writefile{toc}{\contentsline {section}{\numberline {A.1}Lorem ipsum}{18}{section.A.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {A.2}Homo sapiens non urinat in ventum}{18}{section.A.2}\protected@file@percent }
+\gdef \@abspage@last{21}
