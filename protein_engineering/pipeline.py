@@ -164,11 +164,11 @@ class AADataset(IterableDataset):
         self.chains = pdb['chain_id'].nunique()
         if self.chains > 1:
             chains = pdb['chain_id'].unique()
-            sequence = pdb[pdb['chain_id'] == chains[0]].sort_values(by='residue_number')['resname']
+            sequence = pdb[pdb['chain_id'] == chains[0]].sort_values(by='residue_number')['resname'].reset_index(drop=True)
             homomeric = True
             for chain in chains[1:]:
-                aux_sequence = pdb[pdb['chain_id'] == chain].sort_values(by='residue_number')['resname']
-                homomeric = homomeric and (sequence == aux_sequence).all()
+                aux_sequence = pdb[pdb['chain_id'] == chain].sort_values(by='residue_number')['resname'].reset_index(drop=True)
+                homomeric = homomeric and sequence.equals(aux_sequence)
                 if not homomeric:
                     break
 
