@@ -4,6 +4,7 @@ import math
 import heapq
 import pickle
 import pathlib
+from pathlib import Path
 from collections import defaultdict
 import numpy as np
 import pandas as pd
@@ -93,8 +94,8 @@ class SingleMutation:
         self.name = name
         self.confidence = float(confidence)
         self.position = int(position)
-        self.original_res = int(original_res)
-        self.new_res = int(new_res)
+        self.original_res = original_res
+        self.new_res = new_res
 
 class AADataset(IterableDataset):
     """
@@ -116,13 +117,17 @@ class AADataset(IterableDataset):
         self.residues = len(self.sequence)
 
         # DETERMINE ALL PDBS THAT MATCH THE WILDTYPE SEQUENCE
-        structures = mapper[mapper['wildtype'] == wildtype]['identifiers'].split(',')
+        str_identifiers = mapper[mapper['wildtype'] == self.sequence]['identifiers']
+        if len(str_identifiers) > 1:
+            raise Exception('Multiple wildtpye sequences found. Aborting.')
+        structures = str_identifiers.iloc[0].split(',')
         
         # CHOOSE TO WORK WITH ALPHAFOLD PREDICTED STRUCTURES
         if use_alphafold:
-            structures = filter(lambda id: id.startswith('AF'), structures)
+            structures = list(filter(lambda id: id.startswith('AF'), structures)) # ASSUME ALPHAFOLD STRUCTURES LOOK LIKE AFP06654F1
+            structures = [f'AF-{x[2:-2]}-F1' for x in structures]
         else:
-            structures = filter(lambda id: not id.startswith('AF'), structures)
+            structures = list(filter(lambda id: not id.startswith('AF'), structures))
         
         if len(structures) > 1:
             print('WARNING: Multiple structures have been reported for this sequence.')
@@ -131,10 +136,11 @@ class AADataset(IterableDataset):
         found = False
         pdb = None
         for structure in structures:
-            file = os.path.join(structure_dir, f'{structure}.pdb')
+            file = Path(os.path.join(structure_dir, f'{structure}.pdb'))
             try:
                 if file.exists():
-                    pdb = PandasPdb().read_csv(file).df['ATOM']
+                    print(file)
+                    pdb = PandasPdb().read_pdb(str(file)).df['ATOM']
                     found = True
             except:
                 pass
@@ -157,8 +163,19 @@ class AADataset(IterableDataset):
         # CHECK WHETHER THE ASSEMBLY IS HOMOMERIC
         self.chains = pdb['chain_id'].nunique()
         if self.chains > 1:
-            print(f'Detected heteromeric assembly. Skipping for now. Are you sure you are using AlphaFold?')
-            self.skip = True
+            chains = pdb['chain_id'].unique()
+            sequence = pdb[pdb['chain_id'] == chains[0]].sort_values(by='residue_number')['resname']
+            homomeric = True
+            for chain in chains[1:]:
+                aux_sequence = pdb[pdb['chain_id'] == chain].sort_values(by='residue_number')['resname']
+                homomeric = homomeric and (sequence == aux_sequence).all()
+                if not homomeric:
+                    break
+
+            if not homomeric: 
+                print(f'Detected heteromeric assembly. Skipping for now. Are you sure you are using AlphaFold?')
+                self.skip = True
+            
         
         # DROPPING TRAILING AMINO-ACIDS (expected to have negative values or really high values)
         pdb = pdb[(pdb['residue_number'] >= 1) & (pdb['residue_number'] <= self.residues)].reset_index(drop=True)
@@ -218,9 +235,10 @@ def uncertainty_search(trainer, dataloader, locs=1, k=3, correct_only=True):
             out = trainer.model(batch)
             probs = softmax(out)
 
+            print(out)
             labels = batch.label
-            res = torch.argmax(probs, dim=-1)
-
+            res = torch.argmax(probs, dim=-1, keepdim=True)
+            print(res)
             if res.dim() == 2:
                 # THIS IS A HOMOMER
                 for g_idx in range(len(batch)):
@@ -242,10 +260,10 @@ def uncertainty_search(trainer, dataloader, locs=1, k=3, correct_only=True):
     
     all_mutations.sort(key=lambda x: x.confidence)
 
-    with open('mutations_all.pkl', 'a+') as handle:
+    with open('mutations_all.pkl', 'wb') as handle:
         pickle.dump(all_mutations, handle)
 
-    with open('mutations_all.csv', 'w', encoding='UTF8') as f:
+    with open('mutations_all.csv', 'a+', encoding='UTF8') as f:
         writer = csv.writer(f)
 
         header = ['wildtype', 'name', 'mutation_position', 'mutation_code', 'mutation_confidence', 'rank']
@@ -258,7 +276,7 @@ def uncertainty_search(trainer, dataloader, locs=1, k=3, correct_only=True):
                 mutation.sequence, 
                 mutation.name,
                 mutation.position, 
-                f'{mutation.original_res}{mutation.position}{mutation.new_res}'
+                f'{mutation.original_res}{mutation.position}{mutation.new_res}',
                 -mutation.confidence, 
                 rank
             ]
