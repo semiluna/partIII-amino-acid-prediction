@@ -108,10 +108,17 @@ class RES_EQGATModel(nn.Module):
         else:
             y_pred = s
 
-        subset_idx = data.ca_idx + data.ptr[:-1]
+        
+        if data.ca_idx.dim() == 1:
+            subset_idx = data.ca_idx + data.ptr[:-1]
+        else:
+            subset_idx = (data.ca_idx + data.ptr[:-1].unsqueeze(1)).flatten()
+        
         y_pred = y_pred[subset_idx]
-
         y_pred = self.downstream(y_pred)
+
+        if data.ca_idx.dim() > 1:
+            y_pred = y_pred.view(data.ca_idx.shape[0], -1, 20)
 
         return y_pred
 

@@ -1,11 +1,16 @@
+import os
 import csv
 import math
 import heapq
 import pickle
+import pathlib
 from collections import defaultdict
 import numpy as np
+import pandas as pd
 
+from typing import Union
 from tqdm import tqdm
+
 import torch
 from torch.nn import Softmax
 from biopandas.pdb import PandasPdb
@@ -15,7 +20,9 @@ from torch.utils.data import DataLoader, IterableDataset
 from torch_geometric.loader import DataLoader as geom_DataLoader
 
 from gvp_antonia.protein_graph import AtomGraphBuilder, _element_alphabet
+from protein_engineering.protein_gym import ProteinGymDataset
 
+STRUCTURE_PATH = '/Users/antoniaboca/partIII-amino-acid-prediction/data/ProteinGym_structures_clean'
 _NUM_ATOM_TYPES = 9
 _element_mapping = lambda x: {
     'H' : 0,
@@ -80,52 +87,85 @@ _3to1 = lambda aa: protein_letters_3to1[aa.capitalize()]
 # I am assuming .pdb incoming files
 # !!!!!TODO!!!!! I am giving the ENTIRE molecule to the model
 
-class Pair:
-    def __init__(self, pdb, confidence, mutations, mutation_confidences, masked_res, og_res):
-        self.pdb = pdb
+class SingleMutation:
+    def __init__(self, sequence, name, confidence, position, original_res, new_res):
+        self.sequence = sequence
+        self.name = name
         self.confidence = float(confidence)
-        self.mutations = [int(x) for x in mutations]
-        self.confs = [float(x) for x in mutation_confidences]
-        self.masked_residue = int(masked_res) 
-        self.og_res = int(og_res)
-    
-    def __lt__(self, other):
-        return self.confidence < other.confidence
+        self.position = int(position)
+        self.original_res = int(original_res)
+        self.new_res = int(new_res)
 
 class AADataset(IterableDataset):
-    """Dataset of all possible masked graphs for a single molecule"""
-    def __init__(self, wildtype, pdb=None, file=None, code=None, max_len=None):
-        # TODO figure out what the wildtype is : a string? a code?
-        assert sum([x is not None for x in [pdb, file, code]]) == 1, "Input must be ONE of [biopandas dataframe, path to pdb file, pdb code]"
+    """
+    Dataset of all possible masked graphs for a single molecule from ProteinGym
+    WARNING: THIS DATASET ASSUMES THAT THE PDBs PROVIDED HAVE ALREADY BEEN CLEANED.
+    """
+    def __init__(self, 
+                wildtype : ProteinGymDataset, 
+                mapper : pd.DataFrame, 
+                use_alphafold : bool = False,
+                max_len : int = None, 
+                structure_dir : Union[str, pathlib.Path] = STRUCTURE_PATH):
 
         self.max_len = max_len
         self.graph_builder = AtomGraphBuilder(_element_alphabet)
-        self.wildtype = wildtype
+        self.sequence = wildtype.data[wildtype.data['is_wildtype'] == True].iloc[0]['sequence']
+        self.name = wildtype.name
+        self.skip = False
+        self.residues = len(self.sequence)
 
-        if file is not None:
-            pdb = PandasPdb().read_pdb(file).df['ATOM']
-            pdb = pdb.rename(columns={
-                    'x_coord': 'x', 
-                    'y_coord':'y', 
-                    'z_coord': 'z', 
-                    'element_symbol': 'element', 
-                    'atom_name': 'name', 
-                    'residue_name': 'resname'})
-        elif code is not None:
-            pdb = PandasPdb().fetch_pdb(code).df['ATOM']
-            pdb = pdb.rename(columns={
-                    'x_coord': 'x', 
-                    'y_coord':'y', 
-                    'z_coord': 'z', 
-                    'element_symbol': 'element', 
-                    'atom_name': 'name', 
-                    'residue_name': 'resname'})
+        # DETERMINE ALL PDBS THAT MATCH THE WILDTYPE SEQUENCE
+        structures = mapper[mapper['wildtype'] == wildtype]['identifiers'].split(',')
         
+        # CHOOSE TO WORK WITH ALPHAFOLD PREDICTED STRUCTURES
+        if use_alphafold:
+            structures = filter(lambda id: id.startswith('AF'), structures)
+        else:
+            structures = filter(lambda id: not id.startswith('AF'), structures)
+        
+        if len(structures) > 1:
+            print('WARNING: Multiple structures have been reported for this sequence.')
+        
+        # LOAD FIRST CLEAN STRUCTURE WE CAN FIND
+        found = False
+        pdb = None
+        for structure in structures:
+            file = os.path.join(structure_dir, f'{structure}.pdb')
+            try:
+                if file.exists():
+                    pdb = PandasPdb().read_csv(file).df['ATOM']
+                    found = True
+            except:
+                pass
+            if found:
+                break
+                
+        if not found:
+            print(f'WARNING: no clean structure found for {self.name}. Skipping for now.')
+            self.skip = True
+            return
+
+        pdb = pdb.rename(columns={
+                'x_coord': 'x', 
+                'y_coord':'y', 
+                'z_coord': 'z', 
+                'element_symbol': 'element', 
+                'atom_name': 'name', 
+                'residue_name': 'resname'})
+        
+        # CHECK WHETHER THE ASSEMBLY IS HOMOMERIC
+        self.chains = pdb['chain_id'].nunique()
+        if self.chains > 1:
+            print(f'Detected heteromeric assembly. Skipping for now. Are you sure you are using AlphaFold?')
+            self.skip = True
+        
+        # DROPPING TRAILING AMINO-ACIDS (expected to have negative values or really high values)
+        pdb = pdb[(pdb['residue_number'] >= 1) & (pdb['residue_number'] <= self.residues)].reset_index(drop=True)
         self.pdb = pdb
-        self.residues = max(pdb['residue_number'])
-    
+
     def __iter__(self):
-        length = self.residues
+        length = self.residues if not self.skip else 0
         if self.max_len:
             length = min(length, self.max_len)
         indices = [x+1 for x in list(range(length))]
@@ -142,31 +182,35 @@ class AADataset(IterableDataset):
     
     def _dataset_generator(self, res_ids):
         pdb = self.pdb
-        # TODO add some sort of ensemble information
         for res_id in res_ids:
             to_remove = (pdb['residue_number'] == res_id) & (~pdb['name'].isin(['N', 'CA', 'O', 'C'])) 
             my_atoms = pdb[~to_remove].reset_index(drop=True)
             label = pdb[(pdb['residue_number'] == res_id) & (pdb['name'] == 'CA')]['resname'].iloc[0]
             ca_idx = np.where((my_atoms['residue_number'] == res_id) & (my_atoms['name'] == 'CA'))[0]
-            if len(ca_idx) != 1: 
-                continue
+            if len(ca_idx) == 1: 
+                ca_idx = int(ca_idx) 
+            else:
+                # THIS IS A HOMOMERIC ASSEMBLY. WE MASKED ALL COPIES OF THE SAME RESIDUE.
+                ca_idx = torch.tensor(ca_idx).unsqueeze(0)               
 
             graph = self.graph_builder(my_atoms)
             graph.label = _amino_acids(label)
-            graph.ca_idx = int(ca_idx)
+            graph.ca_idx = ca_idx
             graph.masked_res_id = res_id
-            graph.wildtype = self.wildtype
-            graph.pdb = pdb
+            graph.name = self.name
+            graph.sequence = self.sequence
 
             yield graph
 
 # TODO STEP 3: Pass the amino-acid through the trained model
 # TODO STEP 4: Find where the model is most uncertain
 # TODO STEP 5: Choose top three mutations in a single spot
-def uncertainty_search(trainer, dataloader, locs=1, k=3): 
+def uncertainty_search(trainer, dataloader, locs=1, k=3, correct_only=True): 
+    """NOTE: THIS SEARCH ASSUMES A SINGLE MOLECULE AT A TIME."""
+
     trainer.eval()
 
-    top_k = defaultdict(list)
+    all_mutations = []
     softmax = Softmax(dim=-1)
 
     for batch in tqdm(dataloader):
@@ -175,52 +219,53 @@ def uncertainty_search(trainer, dataloader, locs=1, k=3):
             probs = softmax(out)
 
             labels = batch.label
-            # TODO: we only look at places where it is correct?
             res = torch.argmax(probs, dim=-1)
-            conf = torch.max(probs, dim=-1)
-            mutation_confs, tops = torch.topk(probs, k, dim=-1)
 
-            for g_idx in range(len(batch)):
-                if res[g_idx] == labels[g_idx]:
-                    # it is correct, but what is the confidence?
-                    confidence = conf[g_idx]
-                    graph = batch[g_idx]
-                    pq = top_k[graph.wildtype]
-                    mutations = tops[g_idx]
-                    confs = mutation_confs[g_idx]
-
-                    # pushing negative values so the lowest positive confidences have the highest priority
-                    heapq.heappush(pq, Pair(graph.pdb, -confidence, mutations, confs, graph.masked_res_id, graph.label))
-                    if len(pq) > locs:
-                        # We are interested in top K least cofident predictions
-                        heapq.heappop(pq)
+            if res.dim() == 2:
+                # THIS IS A HOMOMER
+                for g_idx in range(len(batch)):
+                    if (correct_only and res[g_idx] == labels[g_idx]) or (not correct_only):
+                        # IN THIS BRANCH WE ONLY CONSIDER PLACES WHERE THE MODEL IS CORRECT
+                        for aa in range(20):
+                            
+                            confidence = probs[g_idx][aa]
+                            sequence = batch[g_idx].sequence
+                            original_res = _3to1(_codes(int(labels[g_idx])))
+                            new_res = _3to1(_codes(aa))
+                            position = batch[g_idx].masked_res_id
+                            name = batch[g_idx].name
+                            
+                            # pushing negative values so the lowest positive confidences have the highest priority
+                            all_mutations.append(SingleMutation(sequence, name, -confidence, position, original_res, new_res))    
+            else:
+                raise NotImplementedError
     
-    with open('mutations.pkl', 'wb') as handle:
-        pickle.dump(top_k, handle)
+    all_mutations.sort(key=lambda x: x.confidence)
 
-    with open('mutations.csv', 'w', encoding='UTF8') as f:
+    with open('mutations_all.pkl', 'a+') as handle:
+        pickle.dump(all_mutations, handle)
+
+    with open('mutations_all.csv', 'w', encoding='UTF8') as f:
         writer = csv.writer(f)
 
-        header = ['wildtype', 'og_confidence', 'mutation_position', 'mutation_codes', 'mutation_confidence']
+        header = ['wildtype', 'name', 'mutation_position', 'mutation_code', 'mutation_confidence', 'rank']
         # write the header
         writer.writerow(header)
         
-        # For every wildtype
-        for wildtype, mutations in top_k.items():
-            # for every position in the original wildtype
-            for pair in mutations:
-                # for every top k mutation on that location
-                for x, conf in zip(pair.mutations, pair.confs):
-                    data = [
-                        str(wildtype), 
-                        -pair.confidence, 
-                        pair.masked_residue, 
-                        f'{_3to1(_codes(pair.og_res))}{pair.masked_residue}{_3to1(_codes(x))}',
-                        conf,
-                    ]
-            
-                    # write the data  
-                    writer.writerow(data)
+        rank = 1
+        for mutation in all_mutations:
+            data = [
+                mutation.sequence, 
+                mutation.name,
+                mutation.position, 
+                f'{mutation.original_res}{mutation.position}{mutation.new_res}'
+                -mutation.confidence, 
+                rank
+            ]
+            # write the data  
+            writer.writerow(data)
+
+            rank += 1
 
 
 # TODO STEP 6: recover the sequence 

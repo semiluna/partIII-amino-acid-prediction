@@ -37,7 +37,17 @@ class RES_GVP(nn.Module):
     def forward(self, graph):
         out = self.gvp(graph, scatter_mean=False)
         out = self.dense(out)
-        return out[graph.ca_idx + graph.ptr[:-1]]
+
+        if graph.ca_idx.dim() == 1:
+            subset_idx = graph.ca_idx + graph.ptr[:-1]
+        else:
+            subset_idx = (graph.ca_idx + graph.ptr[:-1].unsqueeze(1)).flatten()
+        
+        if graph.ca_idx.dim() > 1:
+            y_pred = out[subset_idx]
+            return y_pred.view(graph.ca_idx.shape[0], -1, 20)
+
+        return out[subset_idx]
 
 # Relevant papers:
 # Learning from Protein Structure with Geometric Vector Perceptrons,

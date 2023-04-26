@@ -1,5 +1,6 @@
 */wandb/*
 gvp-simon
+data
 # gvp-pytorch
 *__pycache__*
 .DS_Store
