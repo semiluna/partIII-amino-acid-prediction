@@ -237,27 +237,35 @@ def uncertainty_search(trainer, dataloader, locs=1, k=3, correct_only=True):
 
             print(out)
             labels = batch.label
-            res = torch.argmax(probs, dim=-1, keepdim=True)
-            print(res)
-            if res.dim() == 2:
+            if probs.dim() == 2:
                 # THIS IS A HOMOMER
-                for g_idx in range(len(batch)):
-                    if (correct_only and res[g_idx] == labels[g_idx]) or (not correct_only):
-                        # IN THIS BRANCH WE ONLY CONSIDER PLACES WHERE THE MODEL IS CORRECT
-                        for aa in range(20):
-                            
-                            confidence = probs[g_idx][aa]
-                            sequence = batch[g_idx].sequence
-                            original_res = _3to1(_codes(int(labels[g_idx])))
-                            new_res = _3to1(_codes(aa))
-                            position = batch[g_idx].masked_res_id
-                            name = batch[g_idx].name
-                            
-                            # pushing negative values so the lowest positive confidences have the highest priority
-                            all_mutations.append(SingleMutation(sequence, name, -confidence, position, original_res, new_res))    
+                res = torch.argmax(probs, dim=-1, keepdim=True)
+                print(res)
             else:
-                raise NotImplementedError
-    
+                # WHEN DEALING WITH HOMOMULTIMERS, WE TAKE THE PRODUCT OF
+                # THE PROBABILITY OF AN AMINO-ACID APPEARING AT ALL POSITIONS
+
+                assert probs.dim() == 3 and probs.shape[-1] == 20
+                probs = torch.prod(probs, dim=1)
+                log_sum = torch.log(probs).sum(dim=1)
+                res = torch.argmax(log_sum, dim=-1, keepdim=True)
+
+            for g_idx in range(len(batch)):
+                if (correct_only and res[g_idx] == labels[g_idx]) or (not correct_only):
+                    # IN THIS BRANCH WE ONLY CONSIDER PLACES WHERE THE MODEL IS CORRECT
+                    for aa in range(20):
+                        
+                        confidence = probs[g_idx][aa]
+                        sequence = batch[g_idx].sequence
+                        original_res = _3to1(_codes(int(labels[g_idx])))
+                        new_res = _3to1(_codes(aa))
+                        position = batch[g_idx].masked_res_id
+                        name = batch[g_idx].name
+                        
+                        # pushing negative values so the lowest positive confidences have the highest priority
+                        all_mutations.append(SingleMutation(sequence, name, -confidence, position, original_res, new_res))    
+        
+
     all_mutations.sort(key=lambda x: x.confidence)
 
     with open('mutations_all.pkl', 'wb') as handle:
