@@ -116,10 +116,12 @@ def main(args):
     no_skipped = 0
     skipped = []
 
-
+    
     for file in csv_files:
         path = Path(file)
         dataset_name = path.stem
+        if dataset_name != 'ESTA_BACSU_Nutschel_2020':
+            continue
         hetero_oligomer = mapper[mapper['name'] == dataset_name]['is_hetero_oligomer'].iloc[0]
         structure_exists = mapper[mapper['name'] == dataset_name]['structure_exists'].iloc[0]
         if hetero_oligomer or (not structure_exists):
@@ -135,22 +137,41 @@ def main(args):
 
         pdbs = mapper[mapper['wildtype'] == wildtype]['identifiers'].iloc[0].split(',')
         structures = list(filter(lambda x: not x.startswith('AF'), pdbs))
+        alphafolds = list(filter(lambda x: x.startswith('AF'), pdbs))
+
+        experimental, af = None, None
         if len(structures) > 0:
             structure = structures[0]
-        else:
-            alphafolds = list(filter(lambda x: x.startswith('AF'), pdbs))
-            if len(alphafolds) == 0:
-                print(f'No structure available for {dataset.name}. Skipping.')
-                skipped.append(dataset.name)
-                no_skipped += 1
-                continue
-            else:
-                name = alphafolds[0]
-                structure = f'AF-{name[2:-2]}-F1'
-
-        structure_file = protein_path + '/' + structure.upper() + '.pdb'
-        pdb = get_protein(structure_file)
+            structure_file = protein_path + '/' + structure.upper() + '.pdb'
+            experimental = get_protein(structure_file)
         
+        if len(alphafolds) > 0:
+            alphafold = f'AF-{alphafolds[0][2:-2]}-F1'
+            af_file = protein_path + '/' + alphafold.upper() + '.pdb'
+            af = get_protein(af_file)    
+
+        if (experimental is None) and (af is None):
+            print(f'No structure found for {dataset.name}. Skipping.')
+            skipped.append(dataset.name)
+            no_skipped += 1
+            continue
+        
+        pdb = None
+        if experimental is not None:
+            ex_sequence = list(get_sequence(experimental).values())[0]
+            if len(ex_sequence) == len(wildtype):
+                pdb = experimental
+        if (pdb is None) and (af is not None):
+            af_sequence = list(get_sequence(af).values())[0]
+            if len(af_sequence) == len(wildtype):
+                pdb = af
+            
+        if pdb is None:
+            print(f'No structure found for {dataset.name}. Skipping.')
+            skipped.append(dataset.name)
+            no_skipped += 1
+            continue
+
         all_scores = []
         sequences = np.array(data['sequence']) 
         try:
