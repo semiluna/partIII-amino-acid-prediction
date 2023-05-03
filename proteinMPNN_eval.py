@@ -38,7 +38,7 @@ def extract_backbone(protein):
 
 def prepare_for_mpnn(protein, sequences, batch_size):
 
-    assert len(sequences[0]) < 400
+    assert len(sequences[0]) < 1000
     assert len(sequences) == batch_size
 
     protein = protein[bs.filter_amino_acids(protein)]
@@ -65,7 +65,7 @@ def prepare_for_mpnn(protein, sequences, batch_size):
     ).unsqueeze(0).repeat(batch_size, 1)
     
     jumps = torch.concat(
-        [idx * 400 * torch.ones(len(seq)) for idx, seq in enumerate(seq_chains)]
+        [idx * 1000 * torch.ones(len(seq)) for idx, seq in enumerate(seq_chains)]
     ).unsqueeze(0).repeat(batch_size, 1)
 
     residue_idx = torch.arange(L).unsqueeze(0).repeat(batch_size, 1) + jumps
@@ -113,9 +113,9 @@ def main(args):
     res_path = args.out_path
 
     csv_files = glob.glob(data_path + '/*.csv')
-    no_skipped = 0
     skipped = []
-
+    af_structures = []
+    failed = []
     
     for file in csv_files:
         path = Path(file)
@@ -151,7 +151,6 @@ def main(args):
         if (experimental is None) and (af is None):
             print(f'No structure found for {dataset.name}. Skipping.')
             skipped.append(dataset.name)
-            no_skipped += 1
             continue
         
         pdb = None
@@ -163,11 +162,11 @@ def main(args):
             af_sequence = list(get_sequence(af).values())[0]
             if len(af_sequence) == len(wildtype):
                 pdb = af
+                af_structures.append((dataset_name, alphafold))
             
         if pdb is None:
             print(f'No structure found for {dataset.name}. Skipping.')
             skipped.append(dataset.name)
-            no_skipped += 1
             continue
 
         all_scores = []
@@ -189,8 +188,12 @@ def main(args):
 
         except Exception as error:
             print(f'Failed ProteinMPNN evaluation on {dataset.name}. Error message: \n{error}')
+            failed.append(dataset.name)
 
-    print(f'Failed {no_skipped} datasets. Skipped datasets:\n {skipped}')
+    print(f'Used AlphaFold structures for {len(af_structures)} datasets. Pairs used:\n{af_structures}')
+    print('============================================================')
+    print(f'Failed evaluation on {len(failed)} datasets. Failed datasets:\n {failed}')
+    print(f'Skipped {len(skipped)} datasets due to structure mismatches. Skipped datasets:\n{skipped}')
     
 
 if __name__ == '__main__':
