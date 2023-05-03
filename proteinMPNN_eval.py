@@ -120,8 +120,6 @@ def main(args):
     for file in csv_files:
         path = Path(file)
         dataset_name = path.stem
-        if dataset_name != 'ESTA_BACSU_Nutschel_2020':
-            continue
         hetero_oligomer = mapper[mapper['name'] == dataset_name]['is_hetero_oligomer'].iloc[0]
         structure_exists = mapper[mapper['name'] == dataset_name]['structure_exists'].iloc[0]
         if hetero_oligomer or (not structure_exists):
