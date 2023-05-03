@@ -22,6 +22,7 @@ from torch_geometric.loader import DataLoader as geom_DataLoader
 
 from gvp_antonia.protein_graph import AtomGraphBuilder, _element_alphabet
 from protein_engineering.protein_gym import ProteinGymDataset
+from protein_engineering.utils.ired_dataset import IRED
 
 STRUCTURE_PATH = '/Users/antoniaboca/partIII-amino-acid-prediction/data/ProteinGym_structures_clean'
 _NUM_ATOM_TYPES = 9
@@ -103,7 +104,7 @@ class AADataset(IterableDataset):
     WARNING: THIS DATASET ASSUMES THAT THE PDBs PROVIDED HAVE ALREADY BEEN CLEANED.
     """
     def __init__(self, 
-                wildtype : ProteinGymDataset, 
+                wildtype : Union[ProteinGymDataset, IRED], 
                 mapper : pd.DataFrame, 
                 use_alphafold : bool = False,
                 max_len : int = None, 
@@ -235,27 +236,26 @@ def uncertainty_search(trainer, dataloader, locs=1, k=3, correct_only=True):
             out = trainer.model(batch)
             probs = softmax(out)
 
-            print(out)
             labels = batch.label
             if probs.dim() == 2:
                 # THIS IS A HOMOMER
-                res = torch.argmax(probs, dim=-1, keepdim=True)
-                print(res)
+                log_sum = torch.log(probs)
+                res = torch.argmax(log_sum, dim=-1, keepdim=True)
             else:
                 # WHEN DEALING WITH HOMOMULTIMERS, WE TAKE THE PRODUCT OF
                 # THE PROBABILITY OF AN AMINO-ACID APPEARING AT ALL POSITIONS
 
                 assert probs.dim() == 3 and probs.shape[-1] == 20
-                probs = torch.prod(probs, dim=1)
                 log_sum = torch.log(probs).sum(dim=1)
                 res = torch.argmax(log_sum, dim=-1, keepdim=True)
 
             for g_idx in range(len(batch)):
                 if (correct_only and res[g_idx] == labels[g_idx]) or (not correct_only):
+                    print(labels[g_idx])
                     # IN THIS BRANCH WE ONLY CONSIDER PLACES WHERE THE MODEL IS CORRECT
                     for aa in range(20):
                         
-                        confidence = probs[g_idx][aa]
+                        confidence = log_sum[g_idx][aa]
                         sequence = batch[g_idx].sequence
                         original_res = _3to1(_codes(int(labels[g_idx])))
                         new_res = _3to1(_codes(aa))
