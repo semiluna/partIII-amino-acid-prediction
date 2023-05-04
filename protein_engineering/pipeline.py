@@ -19,12 +19,14 @@ from Bio.Data.IUPACData import protein_letters_3to1
 
 from torch.utils.data import DataLoader, IterableDataset
 from torch_geometric.loader import DataLoader as geom_DataLoader
+import biotite.structure as bs
 
+from gvp_antonia.utils.biotite_utils import *
 from gvp_antonia.protein_graph import AtomGraphBuilder, _element_alphabet
 from protein_engineering.protein_gym import ProteinGymDataset
 from protein_engineering.utils.ired_dataset import IRED
 
-STRUCTURE_PATH = '/Users/antoniaboca/partIII-amino-acid-prediction/data/ProteinGym_structures_clean'
+STRUCTURE_PATH = '/Users/antoniaboca/partIII-amino-acid-prediction/data/ProteinGym_assemblies_clean'
 _NUM_ATOM_TYPES = 9
 _element_mapping = lambda x: {
     'H' : 0,
@@ -89,6 +91,14 @@ _3to1 = lambda aa: protein_letters_3to1[aa.capitalize()]
 # I am assuming .pdb incoming files
 # !!!!!TODO!!!!! I am giving the ENTIRE molecule to the model
 
+def get_protein(file):
+    # pdb, chain = pdb_and_chain.split(".")
+    # pdb = pdb.lower()
+    structure = load_structure(file, model=1)
+    protein = structure[bs.filter_amino_acids(structure)]
+    return protein
+
+
 class SingleMutation:
     def __init__(self, sequence, name, confidence, position, original_res, new_res):
         self.sequence = sequence
@@ -106,7 +116,6 @@ class AADataset(IterableDataset):
     def __init__(self, 
                 wildtype : Union[ProteinGymDataset, IRED], 
                 mapper : pd.DataFrame, 
-                use_alphafold : bool = False,
                 max_len : int = None, 
                 structure_dir : Union[str, pathlib.Path] = STRUCTURE_PATH):
 
@@ -117,40 +126,51 @@ class AADataset(IterableDataset):
         self.skip = False
         self.residues = len(self.sequence)
 
+        hetero_oligomer = mapper[mapper['name'] == self.name]['is_hetero_oligomer'].iloc[0]
+        structure_exists = mapper[mapper['name'] == self.name]['structure_exists'].iloc[0]
+        if hetero_oligomer or (not structure_exists):
+            print(f'Skipping {self.name} (hetero-oligomer or structure does not exist).')
+            self.skip = True
+            return
+
         # DETERMINE ALL PDBS THAT MATCH THE WILDTYPE SEQUENCE
-        str_identifiers = mapper[mapper['wildtype'] == self.sequence]['identifiers']
+        str_identifiers = mapper[mapper['name'] == self.name]['identifiers']
         if len(str_identifiers) > 1:
             raise Exception('Multiple wildtpye sequences found. Aborting.')
-        structures = str_identifiers.iloc[0].split(',')
         
-        # CHOOSE TO WORK WITH ALPHAFOLD PREDICTED STRUCTURES
-        if use_alphafold:
-            structures = list(filter(lambda id: id.startswith('AF'), structures)) # ASSUME ALPHAFOLD STRUCTURES LOOK LIKE AFP06654F1
-            structures = [f'AF-{x[2:-2]}-F1' for x in structures]
-        else:
-            structures = list(filter(lambda id: not id.startswith('AF'), structures))
+        pdbs = mapper[mapper['wildtype'] == self.sequence]['identifiers'].iloc[0].split(',')
+        structures = list(filter(lambda x: not x.startswith('AF'), pdbs))
+        alphafolds = list(filter(lambda x: x.startswith('AF'), pdbs))
+
+        experimental, af = None, None
+        if len(structures) > 0:
+            structure = structures[0]
+            structure_file = structure_dir + '/' + structure.upper() + '.pdb'
+            experimental = get_protein(structure_file)
+            exp_struct = PandasPdb().read_pdb(structure_file).df['ATOM']
         
-        if len(structures) > 1:
-            print('WARNING: Multiple structures have been reported for this sequence.')
+        if len(alphafolds) > 0:
+            alphafold = f'AF-{alphafolds[0][2:-2]}-F1'
+            af_file = structure_dir + '/' + alphafold.upper() + '.pdb'
+            af = get_protein(af_file) 
+            af_struct = PandasPdb().read_pdb(af_file).df['ATOM']   
+
+        if (experimental is None) and (af is None):
+            print(f'No structure found for {self.name}. Skipping.')
         
-        # LOAD FIRST CLEAN STRUCTURE WE CAN FIND
-        found = False
         pdb = None
-        for structure in structures:
-            file = Path(os.path.join(structure_dir, f'{structure}.pdb'))
-            try:
-                if file.exists():
-                    print(file)
-                    pdb = PandasPdb().read_pdb(str(file)).df['ATOM']
-                    found = True
-            except:
-                pass
-            if found:
-                break
-                
-        if not found:
-            print(f'WARNING: no clean structure found for {self.name}. Skipping for now.')
+        if experimental is not None:
+            ex_sequence = list(get_sequence(experimental).values())[0]
+            if len(ex_sequence) >= len(self.sequence):
+                pdb = exp_struct
+        if (pdb is None) and (af is not None):
+            af_sequence = list(get_sequence(af).values())[0]
+            if len(af_sequence) >= len(self.sequence):
+                pdb = af_struct
+        
+        if pdb is None:
             self.skip = True
+            print(f'No structure found for {self.name} of correct length. Skipping.')
             return
 
         pdb = pdb.rename(columns={
@@ -160,24 +180,7 @@ class AADataset(IterableDataset):
                 'element_symbol': 'element', 
                 'atom_name': 'name', 
                 'residue_name': 'resname'})
-        
-        # CHECK WHETHER THE ASSEMBLY IS HOMOMERIC
-        self.chains = pdb['chain_id'].nunique()
-        if self.chains > 1:
-            chains = pdb['chain_id'].unique()
-            sequence = pdb[pdb['chain_id'] == chains[0]].sort_values(by='residue_number')['resname'].reset_index(drop=True)
-            homomeric = True
-            for chain in chains[1:]:
-                aux_sequence = pdb[pdb['chain_id'] == chain].sort_values(by='residue_number')['resname'].reset_index(drop=True)
-                homomeric = homomeric and sequence.equals(aux_sequence)
-                if not homomeric:
-                    break
 
-            if not homomeric: 
-                print(f'Detected heteromeric assembly. Skipping for now. Are you sure you are using AlphaFold?')
-                self.skip = True
-            
-        
         # DROPPING TRAILING AMINO-ACIDS (expected to have negative values or really high values)
         pdb = pdb[(pdb['residue_number'] >= 1) & (pdb['residue_number'] <= self.residues)].reset_index(drop=True)
         self.pdb = pdb

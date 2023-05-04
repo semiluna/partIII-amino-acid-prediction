@@ -2,6 +2,7 @@ import pathlib
 import requests
 import json
 import os
+import numpy as np 
 
 import pandas as pd
 from biopandas.pdb import PandasPdb
