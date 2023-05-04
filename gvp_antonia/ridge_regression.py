@@ -217,7 +217,7 @@ if __name__ == '__main__':
         for file in csv_files:
             print(file)
             dataset = ProteinGymDataset(Path(file))
-            ridge_regression(dataset, mapper, sizes, work_dir, model=args.model, model_path=args.model_path)
+            ridge_regression(dataset, mapper, sizes, work_dir, model=args.model, model_path=args.model_path, data_dir=args.out_dir)
     else:
         dataset = ProteinGymDataset(Path(args.dataset))
         ridge_regression(dataset, mapper, sizes, work_dir, model=args.model, model_path=args.model_path, data_dir=args.out_dir)
