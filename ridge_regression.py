@@ -9,7 +9,7 @@ import pickle
 import os
 import glob
 
-sys.path.append('/Users/antoniaboca/partIII-amino-acid-prediction/')
+sys.path.append('~/partIII-amino-acid-prediction/')
 
 import torch
 import pytorch_lightning as pl
@@ -19,15 +19,14 @@ from Bio.Data.IUPACData import protein_letters_1to3
 from sklearn.linear_model import Ridge
 from sklearn.model_selection import cross_val_score
 
-
 from gvp_antonia.main import ModelWrapper
 from protein_engineering.pipeline import AADataset
 from protein_engineering.utils.de_dataset import DirectedEvolutionDataset
 from protein_engineering.protein_gym import ProteinGymDataset
 from protein_engineering.utils.regression_metrics import get_spearman_fractions, wt_improvement_metric, topk_median
 
-MAPPER = '/Users/antoniaboca/partIII-amino-acid-prediction/data/mapping.csv'
-MODEL_PATH = '/Users/antoniaboca/partIII-amino-acid-prediction/data/eqgat_debug.ckpt'
+MAPPER = './data/mapping.csv'
+MODEL_PATH = './data/eqgat_debug.ckpt'
 EMBEDDINGS_PATH = './data/dummy_embeddings'
 DATA_DIR = '/Users/antoniaboca/partIII-amino-acid-prediction/data'
 
