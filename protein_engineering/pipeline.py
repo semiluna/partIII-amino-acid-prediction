@@ -218,8 +218,8 @@ class AADataset(IterableDataset):
             graph.label = _amino_acids(label)
             graph.ca_idx = ca_idx
             graph.masked_res_id = res_id
-            graph.name = self.name
-            graph.sequence = self.sequence
+            # graph.name = self.name
+            # graph.sequence = self.sequence
 
             yield graph
 

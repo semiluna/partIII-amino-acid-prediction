@@ -124,6 +124,7 @@ def mutation_scoring(
     example = next(iter(loader))
     trainer = ModelWrapper(model, 1e-3, example, 0.0, n_layers=n_layers)
     trainer.load_state_dict(torch.load(model_path, map_location=device)['state_dict'])
+    trainer.to(device)
     trainer.eval()
 
     softmax = Softmax(dim=-1)
@@ -132,7 +133,7 @@ def mutation_scoring(
 
     for batch in tqdm(loader):
         with torch.no_grad():
-            batch.to(device)
+            batch = batch.to(device)
             out = trainer.model(batch)
             probs = softmax(out)
 
@@ -156,19 +157,19 @@ def mutation_scoring(
                     for aa in range(20):
                         
                         confidence   = log_res[g_idx][aa]
-                        sequence     = batch[g_idx].sequence
+                        sequence     = dataset.sequence
                         original_res = _3to1(_codes(int(labels[g_idx])))
                         new_res      = _3to1(_codes(aa))
                         position     = batch[g_idx].masked_res_id
-                        name         = batch[g_idx].name
+                        name         = dataset.name
                     
                         global_mutations.append(SingleMutation(sequence, name, confidence, position, original_res, new_res))    
 
                     # EXTRACT POSITION CONFIDENCES
                     confidence   = log_res[g_idx][res]
-                    sequence     = batch[g_idx].sequence
+                    sequence     = dataset.sequence
                     position     = batch[g_idx].masked_res_id
-                    name         = batch[g_idx].name
+                    name         = dataset.name
                     original_res = _3to1(_codes(int(labels[g_idx])))
 
                     top_k_confidence, top_k_residues = torch.topk(log_res[g_idx], top_k, dim=-1)                    
