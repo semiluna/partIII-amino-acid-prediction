@@ -63,7 +63,7 @@ _amino_acids = lambda x: {
 
 _1toInt = lambda aa: _amino_acids(protein_letters_1to3[aa.upper()].upper())
 
-def get_embeddings(trainer : pl.Trainer, loader : geom_DataLoader, dataset_name : str):
+def get_embeddings(trainer : pl.Trainer, loader : geom_DataLoader, dataset_name : str, device):
     trainer.eval()
     print('Retrieving model logits...')
     embed_path = Path(f'{EMBEDDINGS_PATH}/{dataset_name}.pkl')
@@ -75,6 +75,7 @@ def get_embeddings(trainer : pl.Trainer, loader : geom_DataLoader, dataset_name 
     positions = {}
     for batch in tqdm(loader):
         with torch.no_grad():
+            batch = batch.to(device)
             logits = trainer.model(batch)
             if logits.dim() > 2:
                 # THIS IS A HOMO MULTIMER, TAKE THE AVERAGE SCORE
@@ -117,6 +118,7 @@ def ridge_regression(
     **loader_kwargs
 ):
     assert model in ['eqgat', 'gvp'], 'Unrecognised model'
+    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
     dataset = AADataset(
         wildtype, 
@@ -136,8 +138,8 @@ def ridge_regression(
     example = next(iter(loader))
     trainer = ModelWrapper(model, 1e-3, example, 0.0, n_layers=n_layers)
     trainer.load_state_dict(torch.load(model_path, map_location=torch.device('cpu'))['state_dict'])
-    
-    embeddings = get_embeddings(trainer, loader, dataset.name)
+    trainer.to(device)
+    embeddings = get_embeddings(trainer, loader, dataset.name, device)
 
     # test_sample = wildtype.data.sample(frac=0.2)
     # training_data_full = wildtype.data.drop(test_sample.index)
