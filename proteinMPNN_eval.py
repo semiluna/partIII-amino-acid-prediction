@@ -76,7 +76,10 @@ def prepare_for_mpnn(protein, sequences, batch_size):
     
     return X, S, mask, chain_M, residue_idx, chain_encoding_all, randn
 
-
+def to_device(*args, device):
+    for arg in args:
+        arg.to_device(device)
+        
 def main(args):
 
     # ========================== LOAD PROTEINMPNN ==========================
@@ -176,6 +179,7 @@ def main(args):
                 batch = sequences[idx:(idx + batch_size)]
                 # sequence = row['sequence']
                 X, S, mask, chain_M, residue_idx, chain_encoding_all, randn = prepare_for_mpnn(pdb, batch, batch_size)
+                to_device(X, S, mask, chain_M, residue_idx, chain_encoding_all, randn, device=device)
                 log_probs = model(X, S, mask, chain_M, residue_idx, chain_encoding_all, randn)
                 scores = _scores(S, log_probs, torch.ones_like(S))
                 native_score = scores.cpu().data.numpy()
