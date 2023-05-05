@@ -78,8 +78,8 @@ def prepare_for_mpnn(protein, sequences, batch_size):
 
 def to_device(*args, device):
     for arg in args:
-        arg.to_device(device)
-        
+        arg.to(device)
+
 def main(args):
 
     # ========================== LOAD PROTEINMPNN ==========================
