@@ -211,6 +211,7 @@ if __name__ == '__main__':
         os.makedirs(work_dir)
 
     sizes = list(range(24, 240, 24))
+    # sizes = [24]
 
     if args.dataset == 'all':
         csv_files = glob.glob(args.out_dir + '/ProteinGym_substitutions/*.csv')
@@ -220,7 +221,7 @@ if __name__ == '__main__':
             ridge_regression(dataset, mapper, sizes, work_dir, model=args.model, model_path=args.model_path, data_dir=args.out_dir)
     else:
         dataset = ProteinGymDataset(Path(args.dataset))
-        ridge_regression(dataset, mapper, sizes, work_dir, model=args.model, model_path=args.model_path, data_dir=args.out_dir)
+        ridge_regression(dataset, mapper, sizes, work_dir, model=args.model, iterations=20, model_path=args.model_path, data_dir=args.out_dir)
 
 
 
