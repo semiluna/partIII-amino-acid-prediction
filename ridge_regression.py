@@ -83,7 +83,7 @@ def get_embeddings(trainer : pl.Trainer, loader : geom_DataLoader, dataset_name 
             
             for bidx in range(len(batch)):
                 pos = int(batch[bidx].masked_res_id)
-                positions[pos] = logits[bidx]
+                positions[pos] = logits[bidx].cpu().numpy()
 
     with open(embed_path, 'wb') as handle:
         pickle.dump(positions, handle)
@@ -98,7 +98,6 @@ def get_embeddings(trainer : pl.Trainer, loader : geom_DataLoader, dataset_name 
 # STEP 6: Repeat steps 3-6 any number of times
 
 def get_features(sequences : pd.Series, embeddings : dict):
-
     seqs = sequences.to_numpy()
     features =  np.array([[embeddings[idx + 1][_1toInt(letter)] for idx, letter in enumerate(sequence)] for sequence in seqs])
     return features
@@ -164,12 +163,12 @@ def ridge_regression(
                 X_test = get_features(test_sample['sequence'], embeddings)
                 y_test = test_sample['fitness'].to_numpy()
                 y_wt =  wildtype.data[wildtype.data['is_wildtype'] == True].iloc[0]['fitness']
-
+                
                 training_data = single_mutant.drop(test_sample.index)
                 train_sample = training_data.sample(n=N)
                 X_train = get_features(train_sample['sequence'], embeddings)
                 y_train = train_sample['fitness'].to_numpy()
-
+                
                 ridge = Ridge()
                 cv_scores = []
                 alphas = [0.001, 0.01, 0.1, 0.2, 0.3, 0.5, 1.0, 2.0]
