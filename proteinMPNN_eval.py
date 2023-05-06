@@ -36,11 +36,10 @@ def tokenise_sequence(seq):
 def extract_backbone(protein):
     return protein[np.isin(protein.atom_name, ["N", "CA", "C", "O"])]
 
-def prepare_for_mpnn(protein, sequences, batch_size):
+def prepare_for_mpnn(protein, sequences):
 
     assert len(sequences[0]) < 1000
-    assert len(sequences) == batch_size
-
+    batch_size = len(sequences)
     protein = protein[bs.filter_amino_acids(protein)]
     backbone = extract_backbone(protein)
     X = torch.tensor(backbone.coord.reshape(1, -1, 4, 3), dtype=torch.float32).repeat(batch_size, 1, 1, 1)
@@ -174,7 +173,7 @@ def main(args):
             for idx in tqdm(range(0, len(sequences), batch_size)):
                 batch = sequences[idx:(idx + batch_size)]
                 # sequence = row['sequence']
-                X, S, mask, chain_M, residue_idx, chain_encoding_all, randn = prepare_for_mpnn(pdb, batch, batch_size)
+                X, S, mask, chain_M, residue_idx, chain_encoding_all, randn = prepare_for_mpnn(pdb, batch)
                 
                 X = X.to(device)
                 S = S.to(device)
@@ -183,7 +182,7 @@ def main(args):
                 residue_idx = residue_idx.to(device)
                 chain_encoding_all = chain_encoding_all.to(device)
                 randn = randn.to(device)
-                
+
                 log_probs = model(X, S, mask, chain_M, residue_idx, chain_encoding_all, randn)
                 scores = _scores(S, log_probs, torch.ones_like(S))
                 native_score = scores.cpu().data.numpy()
