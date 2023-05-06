@@ -1,0 +1,30 @@
+% \begin{algorithm}
+% \caption{Geometric Vector Perceptron}
+\hline
+\begin{algorithmic}
+\renewcommand{\algorithmicrequire}{\textbf{Input:}}
+\renewcommand{\algorithmicensure}{\textbf{Output:}}
+\Require{Scalar and vector feats. $(\mathbf{s}, \mathbf{V}) \in \mathbb{R}^n\times \mathbb{R}^{\nu \times 3}$}
+\Ensure{Scalar and vector feats. $(\mathbf{s}', \mathbf{V}')\in \mathbb{R}^n\times\mathbb{R}^{\mu\times 3}$}
+\State $h \gets \max(\nu, \mu)$
+
+\State $V_h \gets \mathbf{W}_h\mathbf{V} \in \mathbb{R}^{h\times3}$
+
+\State $V_{\mu} \gets \mathbf{W}_{\mu}\mathbf{V}_h \in \mathbb{R}^{\mu\times 3}$
+
+\State $\mathbf{s}_h\gets ||V_h||_2$ (row-wise) $\in \mathbb{R}^h$
+
+\State $\mathbf{v}_{\mu} \gets ||V_{\mu}||_2$ (row-wise) $\in \mathbb{R}^{\mu}$
+
+\State $\mathbf{s}_{h + n} \gets \text{concat}(\mathbf{s}_h, \mathbf{s})\in\mathbb{R}^{h + n}$
+
+\State $\mathbf{s}_m \gets \mathbf{W}_m\mathbf{s}_{h+n}+\mathbf{b}\in \mathbb{R}^m$
+
+\State $\mathbf{s}' \gets \sigma(\mathbf{s}_m)\in \mathbb{R}^m $
+
+\State $\mathbf{V}' \gets \sigma_g(\mathbf{W}_g[\sigma^{+}(\mathbf{s}_m)] + \mathbf{b}_g) \circledcirc \mathbf{V}_{\mu}$ (row-wise) $\in \mathbb{R}^{\mu \times 3}$
+\\
+\Return $(\mathbf{s}', \mathbf{V}')$
+\end{algorithmic}
+\hline
+% \end{algorithm}

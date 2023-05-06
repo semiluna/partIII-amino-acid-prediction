@@ -8,6 +8,69 @@
   publisher={Aaai Press Menlo Park}
 }
 
+@misc{layernorm,
+      title={Layer Normalization}, 
+      author={Jimmy Lei Ba and Jamie Ryan Kiros and Geoffrey E. Hinton},
+      year={2016},
+      eprint={1607.06450},
+      archivePrefix={arXiv},
+      primaryClass={stat.ML}
+}
+
+@article{dropout,
+  author  = {Nitish Srivastava and Geoffrey Hinton and Alex Krizhevsky and Ilya Sutskever and Ruslan Salakhutdinov},
+  title   = {Dropout: A Simple Way to Prevent Neural Networks from Overfitting},
+  journal = {Journal of Machine Learning Research},
+  year    = {2014},
+  volume  = {15},
+  number  = {56},
+  pages   = {1929--1958},
+  url     = {http://jmlr.org/papers/v15/srivastava14a.html}
+}
+
+@misc{gvp1,
+      title={Learning from Protein Structure with Geometric Vector Perceptrons}, 
+      author={Bowen Jing and Stephan Eismann and Patricia Suriana and Raphael J. L. Townshend and Ron Dror},
+      year={2021},
+      eprint={2009.01411},
+      archivePrefix={arXiv},
+      primaryClass={q-bio.BM}
+}
+
+@article{gvp2,
+  author       = {Bowen Jing and
+                  Stephan Eismann and
+                  Pratham N. Soni and
+                  Ron O. Dror},
+  title        = {Equivariant Graph Neural Networks for 3D Macromolecular Structure},
+  journal      = {CoRR},
+  volume       = {abs/2106.03843},
+  year         = {2021},
+  url          = {https://arxiv.org/abs/2106.03843},
+  eprinttype    = {arXiv},
+  eprint       = {2106.03843},
+  timestamp    = {Thu, 10 Jun 2021 16:34:18 +0200},
+  biburl       = {https://dblp.org/rec/journals/corr/abs-2106-03843.bib},
+  bibsource    = {dblp computer science bibliography, https://dblp.org}
+}
+
+@InProceedings{tranception,
+  title = 	 {Tranception: Protein Fitness Prediction with Autoregressive Transformers and Inference-time Retrieval},
+  author =       {Notin, Pascal and Dias, Mafalda and Frazer, Jonathan and Hurtado, Javier Marchena and Gomez, Aidan N and Marks, Debora and Gal, Yarin},
+  booktitle = 	 {Proceedings of the 39th International Conference on Machine Learning},
+  pages = 	 {16990--17017},
+  year = 	 {2022},
+  editor = 	 {Chaudhuri, Kamalika and Jegelka, Stefanie and Song, Le and Szepesvari, Csaba and Niu, Gang and Sabato, Sivan},
+  volume = 	 {162},
+  series = 	 {Proceedings of Machine Learning Research},
+  month = 	 {17--23 Jul},
+  publisher =    {PMLR},
+  pdf = 	 {https://proceedings.mlr.press/v162/notin22a/notin22a.pdf},
+  url = 	 {https://proceedings.mlr.press/v162/notin22a.html},
+  abstract = 	 {The ability to accurately model the fitness landscape of protein sequences is critical to a wide range of applications, from quantifying the effects of human variants on disease likelihood, to predicting immune-escape mutations in viruses and designing novel biotherapeutic proteins. Deep generative models of protein sequences trained on multiple sequence alignments have been the most successful approaches so far to address these tasks. The performance of these methods is however contingent on the availability of sufficiently deep and diverse alignments for reliable training. Their potential scope is thus limited by the fact many protein families are hard, if not impossible, to align. Large language models trained on massive quantities of non-aligned protein sequences from diverse families address these problems and show potential to eventually bridge the performance gap. We introduce Tranception, a novel transformer architecture leveraging autoregressive predictions and retrieval of homologous sequences at inference to achieve state-of-the-art fitness prediction performance. Given its markedly higher performance on multiple mutants, robustness to shallow alignments and ability to score indels, our approach offers significant gain of scope over existing approaches. To enable more rigorous model testing across a broader range of protein families, we develop ProteinGym – an extensive set of multiplexed assays of variant effects, substantially increasing both the number and diversity of assays compared to existing benchmarks.}
+}
+
+
 @article{Lu2022,
 author = {Lu, Hongyuan and Diaz, Daniel J. and Czarnecki, Natalie J. and Zhu, Congzhi and Kim, Wantae and Shroff, Raghav and Acosta, Daniel J. and Alexander, Bradley R. and Cole, Hannah O. and Zhang, Yan and Lynd, Nathaniel A. and Ellington, Andrew D. and Alper, Hal S.},
 title = {Machine learning-aided engineering of hydrolases for PET depolymerization},
