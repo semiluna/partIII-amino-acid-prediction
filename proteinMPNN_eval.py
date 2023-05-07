@@ -120,68 +120,69 @@ def main(args):
         name = path.stem
 
     for file in csv_files:
-        path = Path(file)
-        dataset_name = path.stem
-        if args.dataset != 'all' and dataset_name != name:
-            continue
-        hetero_oligomer = mapper[mapper['name'] == dataset_name]['is_hetero_oligomer'].iloc[0]
-        structure_exists = mapper[mapper['name'] == dataset_name]['structure_exists'].iloc[0]
-        if hetero_oligomer or (not structure_exists):
-            print(f'Skipping {dataset_name}.')
-            continue
-            
-        print(f'Evaluating single-point mutations in {dataset_name}')
-
-        dataset = ProteinGymDataset(path)
-        single_mutant_mask = (~dataset.data['variant'].str.contains(','))
-        data = dataset.data[single_mutant_mask]
-        wildtype = dataset.wildtype_data['sequence'].iloc[0]
-
-        pdbs = mapper[mapper['wildtype'] == wildtype]['identifiers'].iloc[0].split(',')
-        structures = list(filter(lambda x: not x.startswith('AF'), pdbs))
-        alphafolds = list(filter(lambda x: x.startswith('AF'), pdbs))
-
-        experimental, af = None, None
-        if len(structures) > 0:
-            structure = structures[0]
-            structure_file = protein_path + '/' + structure.upper() + '.pdb'
-            experimental = get_protein(structure_file)
-            # DROP WHATEVER LIGANDS WE FIND
-            mask = np.where((experimental.res_id <= len(wildtype)) & (experimental.res_id >= 1))[0]
-            experimental = experimental[mask]
-        
-        if len(alphafolds) > 0:
-            alphafold = f'AF-{alphafolds[0][2:-2]}-F1'
-            af_file = protein_path + '/' + alphafold.upper() + '.pdb'
-            af = get_protein(af_file)
-            # DROP WHATEVER LIGANDS WE FIND
-            mask = np.where((af.res_id <= len(wildtype)) & (af.res_id >= 1))[0]
-            af = af[mask]    
-
-        if (experimental is None) and (af is None):
-            print(f'No structure found for {dataset.name}. Skipping.')
-            skipped.append(dataset.name)
-            continue
-        
-        pdb = None
-        if experimental is not None:
-            ex_sequence = list(get_sequence(experimental).values())[0]
-            if len(ex_sequence) == len(wildtype):
-                pdb = experimental
-        if (pdb is None) and (af is not None):
-            af_sequence = list(get_sequence(af).values())[0]
-            if len(af_sequence) == len(wildtype):
-                pdb = af
-                af_structures.append((dataset_name, alphafold))
-            
-        if pdb is None:
-            print(f'No structure found for {dataset.name}. Skipping.')
-            skipped.append(dataset.name)
-            continue
-
-        all_scores = []
-        sequences = np.array(data['sequence']) 
         try:
+            path = Path(file)
+            dataset_name = path.stem
+            if args.dataset != 'all' and dataset_name != name:
+                continue
+            hetero_oligomer = mapper[mapper['name'] == dataset_name]['is_hetero_oligomer'].iloc[0]
+            structure_exists = mapper[mapper['name'] == dataset_name]['structure_exists'].iloc[0]
+            if hetero_oligomer or (not structure_exists):
+                print(f'Skipping {dataset_name}.')
+                continue
+                
+            print(f'Evaluating single-point mutations in {dataset_name}')
+
+            dataset = ProteinGymDataset(path)
+            single_mutant_mask = (~dataset.data['variant'].str.contains(','))
+            data = dataset.data[single_mutant_mask]
+            wildtype = dataset.wildtype_data['sequence'].iloc[0]
+
+            pdbs = mapper[mapper['wildtype'] == wildtype]['identifiers'].iloc[0].split(',')
+            structures = list(filter(lambda x: not x.startswith('AF'), pdbs))
+            alphafolds = list(filter(lambda x: x.startswith('AF'), pdbs))
+
+            experimental, af = None, None
+            if len(structures) > 0:
+                structure = structures[0]
+                structure_file = protein_path + '/' + structure.upper() + '.pdb'
+                experimental = get_protein(structure_file)
+                # DROP WHATEVER LIGANDS WE FIND
+                mask = np.where((experimental.res_id <= len(wildtype)) & (experimental.res_id >= 1))[0]
+                experimental = experimental[mask]
+        
+            if len(alphafolds) > 0:
+                alphafold = f'AF-{alphafolds[0][2:-2]}-F1'
+                af_file = protein_path + '/' + alphafold.upper() + '.pdb'
+                af = get_protein(af_file)
+                # DROP WHATEVER LIGANDS WE FIND
+                mask = np.where((af.res_id <= len(wildtype)) & (af.res_id >= 1))[0]
+                af = af[mask]    
+
+            if (experimental is None) and (af is None):
+                print(f'No structure found for {dataset.name}. Skipping.')
+                skipped.append(dataset.name)
+                continue
+        
+            pdb = None
+            if experimental is not None:
+                ex_sequence = list(get_sequence(experimental).values())[0]
+                if len(ex_sequence) == len(wildtype):
+                    pdb = experimental
+            if (pdb is None) and (af is not None):
+                af_sequence = list(get_sequence(af).values())[0]
+                if len(af_sequence) == len(wildtype):
+                    pdb = af
+                    af_structures.append((dataset_name, alphafold))
+                
+            if pdb is None:
+                print(f'No structure found for {dataset.name}. Skipping.')
+                skipped.append(dataset.name)
+                continue
+        
+            all_scores = []
+            sequences = np.array(data['sequence']) 
+
             for idx in tqdm(range(0, len(sequences), batch_size)):
                 batch = sequences[idx:(idx + batch_size)]
                 # sequence = row['sequence']
