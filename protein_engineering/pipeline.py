@@ -147,12 +147,20 @@ class AADataset(IterableDataset):
             structure = structures[0]
             structure_file = structure_dir + '/' + structure.upper() + '.pdb'
             experimental = get_protein(structure_file)
+            # DROP WHATEVER LIGANDS WE FIND
+            mask = np.where((experimental.res_id <= len(self.sequence)) & (experimental.res_id >= 1))[0]
+            experimental = experimental[mask]
+
             exp_struct = PandasPdb().read_pdb(structure_file).df['ATOM']
         
         if len(alphafolds) > 0:
             alphafold = f'AF-{alphafolds[0][2:-2]}-F1'
             af_file = structure_dir + '/' + alphafold.upper() + '.pdb'
             af = get_protein(af_file) 
+            # DROP WHATEVER LIGANDS WE FIND
+            mask = np.where((af.res_id <= len(self.sequence)) & (af.res_id >= 1))[0]
+            af = af[mask]  
+
             af_struct = PandasPdb().read_pdb(af_file).df['ATOM']   
 
         if (experimental is None) and (af is None):
@@ -167,7 +175,7 @@ class AADataset(IterableDataset):
             af_sequence = list(get_sequence(af).values())[0]
             if len(af_sequence) >= len(self.sequence):
                 pdb = af_struct
-        
+        import ipdb; ipdb.set_trace()
         if pdb is None:
             self.skip = True
             print(f'No structure found for {self.name} of correct length. Skipping.')
