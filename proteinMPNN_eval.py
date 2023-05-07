@@ -115,9 +115,15 @@ def main(args):
     af_structures = []
     failed = []
     
+    if args.dataset != 'all':
+        path = Path(args.dataset)
+        name = path.stem
+
     for file in csv_files:
         path = Path(file)
         dataset_name = path.stem
+        if args.dataset != 'all' and dataset_name != name:
+            continue
         hetero_oligomer = mapper[mapper['name'] == dataset_name]['is_hetero_oligomer'].iloc[0]
         structure_exists = mapper[mapper['name'] == dataset_name]['structure_exists'].iloc[0]
         if hetero_oligomer or (not structure_exists):
@@ -140,11 +146,17 @@ def main(args):
             structure = structures[0]
             structure_file = protein_path + '/' + structure.upper() + '.pdb'
             experimental = get_protein(structure_file)
+            # DROP WHATEVER LIGANDS WE FIND
+            mask = np.where((experimental.res_id <= len(wildtype)) & (experimental.res_id >= 1))[0]
+            experimental = experimental[mask]
         
         if len(alphafolds) > 0:
             alphafold = f'AF-{alphafolds[0][2:-2]}-F1'
             af_file = protein_path + '/' + alphafold.upper() + '.pdb'
-            af = get_protein(af_file)    
+            af = get_protein(af_file)
+            # DROP WHATEVER LIGANDS WE FIND
+            mask = np.where((af.res_id <= len(wildtype)) & (af.res_id >= 1))[0]
+            af = af[mask]    
 
         if (experimental is None) and (af is None):
             print(f'No structure found for {dataset.name}. Skipping.')
@@ -210,6 +222,7 @@ if __name__ == '__main__':
     parser.add_argument('--data_path', default=DATA_PATH, type=str)
     parser.add_argument('--structure_path', default=PROTEIN_PATH, type=str)
     parser.add_argument('--out_path', default=RES_PATH, type=str)
+    parser.add_argument('--dataset', default='all', type=str)
 
     args = parser.parse_args()
 
