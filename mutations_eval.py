@@ -141,17 +141,18 @@ def mutation_scoring(
             if probs.dim() == 2:
                 # THIS IS A MONOMER
                 log_res = torch.log(probs)
-                res = torch.argmax(log_res, dim=-1, keepdim=True)
+                res = torch.argmax(log_res, dim=-1)
             else:
                 # WHEN DEALING WITH HOMO-OLIGOMERS, WE TAKE THE AVERAGE OF
                 # THE PROBABILITY OF AN AMINO-ACID APPEARING ON ALL CHAINS
 
                 assert probs.dim() == 3 and probs.shape[-1] == 20
                 log_res = torch.log(probs).mean(dim=1)
-                res = torch.argmax(log_res, dim=-1, keepdim=True)
+                res = torch.argmax(log_res, dim=-1)
 
             for g_idx in range(len(batch)):
-                if (correct_only and res[g_idx] == labels[g_idx]) or (not correct_only):
+                predicted_res = res[g_idx]
+                if (correct_only and predicted_res == labels[g_idx]) or (not correct_only):
                     
                     # EXTRACT GLOBAL CONFIDENCES
                     for aa in range(20):
@@ -166,14 +167,14 @@ def mutation_scoring(
                         global_mutations.append(SingleMutation(sequence, name, confidence, position, original_res, new_res))    
 
                     # EXTRACT POSITION CONFIDENCES
-                    confidence   = log_res[g_idx][res]
+                    confidence   = log_res[g_idx][predicted_res]
                     sequence     = dataset.sequence
                     position     = batch[g_idx].masked_res_id
                     name         = dataset.name
                     original_res = _3to1(_codes(int(labels[g_idx])))
 
                     top_k_confidence, top_k_residues = torch.topk(log_res[g_idx], top_k, dim=-1)                    
-                    mutations = [(float(conf), _3to1(_codes(int(res)))) for conf, res in zip(top_k_confidence, top_k_residues)]
+                    mutations = [(float(conf), _3to1(_codes(int(resi)))) for conf, resi in zip(top_k_confidence, top_k_residues)]
                     position_mutations.append(PositionMutation(sequence, name, confidence, position, original_res, mutations))
 
     global_sorted = sorted(global_mutations, key=lambda x: x.confidence, reverse=True)
