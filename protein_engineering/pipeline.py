@@ -175,7 +175,7 @@ class AADataset(IterableDataset):
             af_sequence = list(get_sequence(af).values())[0]
             if len(af_sequence) >= len(self.sequence):
                 pdb = af_struct
-        import ipdb; ipdb.set_trace()
+
         if pdb is None:
             self.skip = True
             print(f'No structure found for {self.name} of correct length. Skipping.')
