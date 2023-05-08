@@ -155,7 +155,6 @@ def mutation_scoring(
             for g_idx in range(len(batch)):
                 predicted_res = res[g_idx]
                 if (correct_only and predicted_res == labels[g_idx]) or (not correct_only):
-                    
                     # EXTRACT GLOBAL CONFIDENCES
                     for aa in range(20):
                         
@@ -227,8 +226,8 @@ def mutation_scoring(
                     rank
                 ]
             
-            writer.writerow(data)
-            rank += 1
+                writer.writerow(data)
+                rank += 1
 
 
 if __name__ == '__main__':
@@ -263,5 +262,5 @@ if __name__ == '__main__':
         print(f'Failed on {len(failed)} datasets: {failed}')
     else:
         dataset = ProteinGymDataset(Path(args.dataset))
-        mutation_scoring(dataset, mapper, work_dir, model=args.model, model_path=args.model_path, data_dir=args.out_dir, batch_size=args.batch_size)
+        mutation_scoring(dataset, mapper, work_dir, model=args.model, model_path=args.model_path, data_dir=args.out_dir, batch_size=args.batch_size, af_only=args.AF_only, correct_only=args.correct_only)
 
