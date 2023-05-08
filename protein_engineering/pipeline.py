@@ -117,7 +117,8 @@ class AADataset(IterableDataset):
                 wildtype : Union[ProteinGymDataset, IRED], 
                 mapper : pd.DataFrame, 
                 max_len : int = None, 
-                structure_dir : Union[str, pathlib.Path] = STRUCTURE_PATH):
+                structure_dir : Union[str, pathlib.Path] = STRUCTURE_PATH,
+                alphafold_only : bool = False):
 
         self.max_len = max_len
         self.graph_builder = AtomGraphBuilder(_element_alphabet)
@@ -142,6 +143,9 @@ class AADataset(IterableDataset):
         structures = list(filter(lambda x: not x.startswith('AF'), pdbs))
         alphafolds = list(filter(lambda x: x.startswith('AF'), pdbs))
 
+        if alphafold_only:
+            structures = []
+            
         experimental, af = None, None
         if len(structures) > 0:
             structure = structures[0]

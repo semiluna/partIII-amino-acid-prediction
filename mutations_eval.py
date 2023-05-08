@@ -98,8 +98,9 @@ def mutation_scoring(
     model_path : str = MODEL_PATH,   
     n_layers : int = 5,
     data_dir : str = DATA_DIR,
-    correct_only : bool = True,
+    correct_only : bool = False,
     top_k : int = 4,
+    af_only: bool = False,
     **loader_kwargs,
 ):
     assert model in ['eqgat', 'gvp'], 'Unrecognised model.'
@@ -109,7 +110,8 @@ def mutation_scoring(
     dataset = AADataset(
         wildtype, 
         mapper, 
-        structure_dir=os.path.join(data_dir, 'ProteinGym_assemblies_clean')
+        structure_dir=os.path.join(data_dir, 'ProteinGym_assemblies_clean'),
+        alphafold_only = af_only
     )
 
     if dataset.skip:
@@ -237,23 +239,28 @@ if __name__ == '__main__':
     parser.add_argument('--model', type=str, default='eqgat')
     parser.add_argument('--out_dir', type=str, default=DATA_DIR)
     parser.add_argument('--batch_size', type=int, default=1)
+    parser.add_argument('--AF_only', action='store_true', default=False)
+    parser.add_argument('--correct_only', action='store_true', default=False)
     args = parser.parse_args()
 
     mapper = pd.read_csv(args.mapper)
     
-    work_dir = os.path.join(args.out_dir, 'mutation_generation', args.model)
+    work_dir = os.path.join(args.out_dir, 'mutation_generation', args.model, f'AF_only={args.AF_only}-correct_only={args.correct_only}')
     if not os.path.exists(work_dir):
         os.makedirs(work_dir)
 
+    failed = []
     if args.dataset == 'all':
         csv_files = glob.glob(args.out_dir + '/ProteinGym_substitutions/*.csv')
         for file in csv_files:
             try:
                 print(file)
                 dataset = ProteinGymDataset(Path(file))
-                mutation_scoring(dataset, mapper, work_dir, model=args.model, model_path=args.model_path, data_dir=args.out_dir, batch_size=args.batch_size)
+                mutation_scoring(dataset, mapper, work_dir, model=args.model, model_path=args.model_path, data_dir=args.out_dir, batch_size=args.batch_size, af_only=args.AF_only, correct_only=args.correct_only)
             except Exception as e:
                 print(f'Failed on {file}. Error message: \n{e}')
+                failed.append(Path(file).stem)
+        print(f'Failed on {len(failed)} datasets: {failed}')
     else:
         dataset = ProteinGymDataset(Path(args.dataset))
         mutation_scoring(dataset, mapper, work_dir, model=args.model, model_path=args.model_path, data_dir=args.out_dir, batch_size=args.batch_size)
