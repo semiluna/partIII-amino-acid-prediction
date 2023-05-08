@@ -216,9 +216,12 @@ if __name__ == '__main__':
     if args.dataset == 'all':
         csv_files = glob.glob(args.out_dir + '/ProteinGym_substitutions/*.csv')
         for file in csv_files:
-            print(file)
-            dataset = ProteinGymDataset(Path(file))
-            ridge_regression(dataset, mapper, sizes, work_dir, model=args.model, model_path=args.model_path, data_dir=args.out_dir)
+            try:
+                print(file)
+                dataset = ProteinGymDataset(Path(file))
+                ridge_regression(dataset, mapper, sizes, work_dir, model=args.model, model_path=args.model_path, data_dir=args.out_dir)
+            except Exception as e:
+                print(f'Failed on {file}. Error message: \n{e}')
     else:
         dataset = ProteinGymDataset(Path(args.dataset))
         ridge_regression(dataset, mapper, sizes, work_dir, model=args.model, iterations=20, model_path=args.model_path, data_dir=args.out_dir)
