@@ -128,6 +128,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--model_path')
     parser.add_argument('--data_file')
+    parser.add_argument('--batch_size', type=int, default=16)
     args = parser.parse_args()
 
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -136,7 +137,7 @@ if __name__ == '__main__':
     n_layers = 5
     data_file = args.data_file
     test_dataset = RESDataset(os.path.join(data_file, 'test'))
-    test_dataloader = geom_DataLoader(test_dataset, num_workers=8)
+    test_dataloader = geom_DataLoader(test_dataset, num_workers=8, batch_size=args.batch_size)
     example = next(iter(test_dataset))
 
     model = ModelWrapper(model, 1e-3, example, 0.0, n_layers=n_layers)
