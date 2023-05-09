@@ -29,7 +29,7 @@ MAPPER = './data/mapping.csv'
 MODEL_PATH = './data/eqgat_debug.ckpt'
 EMBEDDINGS_PATH = './data/dummy_embeddings'
 DATA_DIR = '/Users/antoniaboca/partIII-amino-acid-prediction/data'
-
+AA_INDEX = './protein_engineering/utils/aa_index_pca19.npy'
 RANDOM_SEEDS = [
       42,	6731,	7390,	2591,	7886,
     9821,	2023,	5376,	2199,	898,
@@ -97,10 +97,28 @@ def get_embeddings(trainer : pl.Trainer, loader : geom_DataLoader, dataset_name 
 # STEP 5: run actual ridge regression, save coefficient 
 # STEP 6: Repeat steps 3-6 any number of times
 
-def get_features(sequences : pd.Series, embeddings : dict):
+def get_features(
+        sequences : pd.Series, 
+        scores : dict, 
+        variants : pd.Series,  
+        embeddings_type : str = 'one_hot', 
+        add_score : bool = True
+):
     seqs = sequences.to_numpy()
-    features =  np.array([[embeddings[idx + 1][_1toInt(letter)] for idx, letter in enumerate(sequence)] for sequence in seqs])
-    return features
+    if embeddings_type == 'one_hot':
+        features = np.stack([np.concatenate([np.eye(21)[_1toInt(letter)] for letter in sequence]) for sequence in seqs])
+    
+    elif embeddings_type == 'aa_index':
+        aa_index = np.load(AA_INDEX)
+        features = np.stack([np.concatenate([aa_index[_1toInt(letter)] for letter in sequence]) for sequence in seqs])
+    else:
+        raise NotImplementedError('Unknown amino-acid embedding for feature creation.')
+
+    if not add_score:
+        return features
+    confidences = np.array(variants.apply(lambda x:int(scores[int(x[1:-1])][_1toInt(x[-1])]) if x != '' else 0)).reshape(-1, 1)
+    total_feats = np.concatenate([features, confidences], axis=1)
+    return total_feats
     
 def ridge_regression(
     wildtype : DirectedEvolutionDataset,
@@ -113,6 +131,8 @@ def ridge_regression(
     model_path : str = MODEL_PATH,
     n_layers : int = 5,
     data_dir : str = DATA_DIR,
+    embeddings_type : str = 'one_hot',
+    add_score : bool = True,
     **loader_kwargs
 ):
     assert model in ['eqgat', 'gvp'], 'Unrecognised model'
@@ -160,13 +180,13 @@ def ridge_regression(
 
             for iteration in range(iterations):
                 test_sample = single_mutant.sample(frac=0.2)
-                X_test = get_features(test_sample['sequence'], embeddings)
+                X_test = get_features(test_sample['sequence'], embeddings, test_sample['variant'], embeddings_type=embeddings_type, add_score=add_score)
                 y_test = test_sample['fitness'].to_numpy()
                 y_wt =  wildtype.data[wildtype.data['is_wildtype'] == True].iloc[0]['fitness']
                 
                 training_data = single_mutant.drop(test_sample.index)
                 train_sample = training_data.sample(n=N)
-                X_train = get_features(train_sample['sequence'], embeddings)
+                X_train = get_features(train_sample['sequence'], embeddings, train_sample['variant'], embeddings_type=embeddings_type, add_score=add_score)
                 y_train = train_sample['fitness'].to_numpy()
                 
                 ridge = Ridge()
@@ -202,6 +222,8 @@ if __name__ == '__main__':
     parser.add_argument('--model_path', type=str, default=MODEL_PATH)
     parser.add_argument('--model', type=str, default='eqgat')
     parser.add_argument('--out_dir', type=str, default=DATA_DIR)
+    parser.add_argument('--embeddings_type', type=str, default='one_hot')
+    parser.add_argument('--add_score', action='store_true')
     args = parser.parse_args()
 
     mapper = pd.read_csv(args.mapper)
@@ -219,12 +241,18 @@ if __name__ == '__main__':
             try:
                 print(file)
                 dataset = ProteinGymDataset(Path(file))
-                ridge_regression(dataset, mapper, sizes, work_dir, model=args.model, model_path=args.model_path, data_dir=args.out_dir)
+                ridge_regression(dataset, mapper, sizes, work_dir, 
+                                model=args.model, model_path=args.model_path, 
+                                data_dir=args.out_dir, embeddings_type=args.embeddings_type, 
+                                add_score=args.add_score)
             except Exception as e:
                 print(f'Failed on {file}. Error message: \n{e}')
     else:
         dataset = ProteinGymDataset(Path(args.dataset))
-        ridge_regression(dataset, mapper, sizes, work_dir, model=args.model, iterations=20, model_path=args.model_path, data_dir=args.out_dir)
+        ridge_regression(dataset, mapper, sizes, work_dir, model=args.model,
+                         model_path=args.model_path, data_dir=args.out_dir, embeddings_type=args.embeddings_type,
+                         add_score=args.add_score)
+                    
 
 
 
