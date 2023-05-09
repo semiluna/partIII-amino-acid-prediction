@@ -228,7 +228,12 @@ if __name__ == '__main__':
 
     mapper = pd.read_csv(args.mapper)
     
-    work_dir = os.path.join(args.out_dir, args.model)
+    if args.add_score:
+        model_dir = os.path.join(args.out_dir, args.model)
+        work_dir = os.path.join(args.model_dir, args.embeddings_type)
+    else:
+        work_dir = os.path.join(args.out_dir, args.embeddings_type)
+    
     if not os.path.exists(work_dir):
         os.makedirs(work_dir)
 
