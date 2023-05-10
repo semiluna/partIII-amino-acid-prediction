@@ -62,14 +62,17 @@ _amino_acids = lambda x: {
 
 _1toInt = lambda aa: _amino_acids(protein_letters_1to3[aa.upper()].upper())
 
-def get_embeddings(trainer : pl.Trainer, loader : geom_DataLoader, dataset_name : str, device):
+def get_embeddings(trainer : pl.Trainer, loader : geom_DataLoader, dataset_name : str, device, name : str):
     trainer.eval()
     print('Retrieving model logits...')
-    embed_path = Path(f'{EMBEDDINGS_PATH}/{dataset_name}.pkl')
+    embed_path = Path(f'{EMBEDDINGS_PATH}/{name}/{dataset_name}.pkl')
     if embed_path.exists():
         with open(embed_path, 'rb') as handle:
             positions = pickle.load(handle)
             return positions
+    else:
+        embed_path = Path(f'{EMBEDDINGS_PATH}/{name}')
+        os.makedirs(embed_path, exist_ok=True)
 
     positions = {}
     for batch in tqdm(loader):
@@ -85,6 +88,7 @@ def get_embeddings(trainer : pl.Trainer, loader : geom_DataLoader, dataset_name 
                 pos = int(batch[bidx].masked_res_id)
                 positions[pos] = logits[bidx].cpu().numpy()
 
+    embed_path = Path(f'{EMBEDDINGS_PATH}/{name}/{dataset_name}.pkl')
     with open(embed_path, 'wb') as handle:
         pickle.dump(positions, handle)
 
@@ -157,7 +161,7 @@ def ridge_regression(
     trainer = ModelWrapper(model, 1e-3, example, 0.0, n_layers=n_layers)
     trainer.load_state_dict(torch.load(model_path, map_location=torch.device('cpu'))['state_dict'])
     trainer.to(device)
-    embeddings = get_embeddings(trainer, loader, dataset.name, device)
+    embeddings = get_embeddings(trainer, loader, dataset.name, device, model)
 
     # test_sample = wildtype.data.sample(frac=0.2)
     # training_data_full = wildtype.data.drop(test_sample.index)
@@ -179,13 +183,13 @@ def ridge_regression(
                 os.makedirs(save_dir)
 
             for iteration in range(iterations):
-                test_sample = single_mutant.sample(frac=0.2)
+                test_sample = single_mutant.sample(frac=0.2, random_state=RANDOM_SEEDS[iteration])
                 X_test = get_features(test_sample['sequence'], embeddings, test_sample['variant'], embeddings_type=embeddings_type, add_score=add_score)
                 y_test = test_sample['fitness'].to_numpy()
                 y_wt =  wildtype.data[wildtype.data['is_wildtype'] == True].iloc[0]['fitness']
                 
                 training_data = single_mutant.drop(test_sample.index)
-                train_sample = training_data.sample(n=N)
+                train_sample = training_data.sample(n=N, random_state=RANDOM_SEEDS[iteration])
                 X_train = get_features(train_sample['sequence'], embeddings, train_sample['variant'], embeddings_type=embeddings_type, add_score=add_score)
                 y_train = train_sample['fitness'].to_numpy()
                 
