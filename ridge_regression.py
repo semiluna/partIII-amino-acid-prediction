@@ -234,7 +234,7 @@ if __name__ == '__main__':
     
     if args.add_score:
         model_dir = os.path.join(args.out_dir, args.model)
-        work_dir = os.path.join(args.model_dir, args.embeddings_type)
+        work_dir = os.path.join(model_dir, args.embeddings_type)
     else:
         work_dir = os.path.join(args.out_dir, args.embeddings_type)
     
