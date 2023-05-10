@@ -24,7 +24,7 @@ import torch.optim as optim
 from torch.utils.data import DataLoader, IterableDataset
 
 from torch_geometric.loader import DataLoader as geom_DataLoader
-
+import torchmetrics as tm 
 import pytorch_lightning as pl
 from pytorch_lightning.loggers import WandbLogger
 from pytorch_lightning.callbacks import ModelCheckpoint, LearningRateMonitor
@@ -175,29 +175,36 @@ class ModelWrapper(pl.LightningModule):
         labels = graph.label.to(self.device)
         
         loss = self.loss_fn(out, labels)
+        pred = torch.argmax(out, dim=-1)
+        acc = torch.sum(pred == labels)
 
-        acc = torch.sum(torch.argmax(out, dim=-1) == labels)
         self.log('test_acc', acc, batch_size=len(labels))
         self.log('test_loss', loss, batch_size=len(labels))
 
-        return {'loss': loss, 'acc': acc, 'n_graphs': len(labels)}
+        return {'loss': loss, 'acc': acc, 'n_graphs': len(labels), 'preds': pred, 'labels': labels}
     
     def test_epoch_end(self, outputs):
         correct_graphs = 0
         total_graphs = 0
         total_loss = 0.0
+        total_preds = torch.tensor([])
+        total_labels = torch.tensor([])
         for output in outputs:
             correct_graphs += output['acc']
             total_graphs += output['n_graphs']
             total_loss += output['loss']
+            total_preds = torch.cat([total_preds, output['preds']])
+            total_labels = torch.cat([total_labels, output['labels']])
 
+        cm = tm.functional.classification.multiclass_confusion_matrix(total_preds, total_labels, num_classes=20)
+        print(cm)
         acc = 1.0 * correct_graphs / total_graphs
         total_loss /= len(outputs)
 
         self.log('test_acc_on_epoch_end', acc, sync_dist=True)
         self.log('test_loss_on_epoch_end', total_loss, sync_dist=True)
-        
-        return {'accuracy': acc, 'test_loss': total_loss}
+
+        return {'accuracy': acc, 'test_loss': total_loss, 'confusion_matrix': cm}
 
 
 class RESDataset(IterableDataset):

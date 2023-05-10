@@ -129,10 +129,11 @@ if __name__ == '__main__':
     parser.add_argument('--model_path')
     parser.add_argument('--data_file')
     parser.add_argument('--batch_size', type=int, default=16)
+    parser.add_argument('--model', type=str, default='eqgat')
     args = parser.parse_args()
 
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-    model = 'gvp'
+    model = args.model
     model_path = args.model_path
     n_layers = 5
     data_file = args.data_file
@@ -143,12 +144,14 @@ if __name__ == '__main__':
     model = ModelWrapper(model, 1e-3, example, 0.0, n_layers=n_layers)
     model.load_state_dict(torch.load(model_path, map_location='cpu')['state_dict'])
 
-    trainer = pl.Trainer( 
-            accelerator='gpu',
-            devices=1,
-            num_nodes=1,
-            #strategy='ddp'
-        ) 
+    # trainer = pl.Trainer( 
+    #         accelerator='gpu',
+    #         devices=1,
+    #         num_nodes=1,
+    #         #strategy='ddp'
+    #     ) 
+
+    trainer = pl.Trainer()
 
     test_result = trainer.test(model, test_dataloader)
     print(test_result)
