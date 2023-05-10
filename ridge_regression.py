@@ -30,6 +30,8 @@ MODEL_PATH = './data/eqgat_debug.ckpt'
 EMBEDDINGS_PATH = './data/dummy_embeddings'
 DATA_DIR = '/Users/antoniaboca/partIII-amino-acid-prediction/data'
 AA_INDEX = './protein_engineering/utils/aa_index_pca19.npy'
+TRANCEPTION = './data/substitutions'
+
 RANDOM_SEEDS = [
       42,	6731,	7390,	2591,	7886,
     9821,	2023,	5376,	2199,	898,
@@ -139,7 +141,7 @@ def ridge_regression(
     add_score : bool = True,
     **loader_kwargs
 ):
-    assert model in ['eqgat', 'gvp'], 'Unrecognised model'
+    assert model in ['eqgat', 'gvp', 'tranception'], 'Unrecognised model'
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
     dataset = AADataset(
@@ -155,14 +157,19 @@ def ridge_regression(
     dataset_dir = os.path.join(work_dir, dataset.name)
     if not os.path.exists(dataset_dir):
         os.makedirs(dataset_dir)
-
-    loader = geom_DataLoader(dataset, **loader_kwargs)
-    example = next(iter(loader))
-    trainer = ModelWrapper(model, 1e-3, example, 0.0, n_layers=n_layers)
-    trainer.load_state_dict(torch.load(model_path, map_location=torch.device('cpu'))['state_dict'])
-    trainer.to(device)
-    embeddings = get_embeddings(trainer, loader, dataset.name, device, model)
-
+    if model in ['eqgat', 'gvp']:
+        loader = geom_DataLoader(dataset, **loader_kwargs)
+        example = next(iter(loader))
+        trainer = ModelWrapper(model, 1e-3, example, 0.0, n_layers=n_layers)
+        trainer.load_state_dict(torch.load(model_path, map_location=torch.device('cpu'))['state_dict'])
+        trainer.to(device)
+        embeddings = get_embeddings(trainer, loader, dataset.name, device, model)
+    else:
+        df = pd.read_csv(os.path.join(TRANCEPTION, f'{dataset.name}.csv'))
+        mask = (df['mutant'].str.contains(',') | df['mutant'].str.contains(':'))
+        df = df[~mask]
+        scores = df['Tranception_L_retrieval']
+        df = df.rename(columns={'Tranception_L_retrieval': 't_score', 'mutant': 'variant'})
     # test_sample = wildtype.data.sample(frac=0.2)
     # training_data_full = wildtype.data.drop(test_sample.index)
     # mask = ~(training_data_full['variant'].str.contains(','))
@@ -170,6 +177,9 @@ def ridge_regression(
     # NOTE: we only work with single-mutants. ProteinMPNN does not know how to handle other types of mutants    
     mask = ~(wildtype.data['variant'].str.contains(','))
     single_mutant = wildtype.data[mask].reset_index(drop=True)
+    
+    if model == 'tranception':
+        single_mutant = single_mutant.merge(df[['variant', 't_score']], on='variant', how='inner')
 
     full_training = int(0.8 * len(single_mutant))
     try:
@@ -184,13 +194,23 @@ def ridge_regression(
 
             for iteration in range(iterations):
                 test_sample = single_mutant.sample(frac=0.2, random_state=RANDOM_SEEDS[iteration])
-                X_test = get_features(test_sample['sequence'], embeddings, test_sample['variant'], embeddings_type=embeddings_type, add_score=add_score)
+                if model in ['eqgat', 'gvp']:
+                    X_test = get_features(test_sample['sequence'], embeddings, test_sample['variant'], embeddings_type=embeddings_type, add_score=add_score)
+                else: # model is Tranception
+                    X_test = get_features(test_sample['sequence'], None, test_sample['variant'], embeddings_type=embeddings_type, add_score=False)
+                    X_test = np.concatenate([X_test, test_sample['t_score'].to_numpy().reshape(-1, 1)], axis=1)
+                
                 y_test = test_sample['fitness'].to_numpy()
                 y_wt =  wildtype.data[wildtype.data['is_wildtype'] == True].iloc[0]['fitness']
                 
                 training_data = single_mutant.drop(test_sample.index)
                 train_sample = training_data.sample(n=N, random_state=RANDOM_SEEDS[iteration])
-                X_train = get_features(train_sample['sequence'], embeddings, train_sample['variant'], embeddings_type=embeddings_type, add_score=add_score)
+                if model in ['eqgat', 'gvp']:
+                    X_train = get_features(train_sample['sequence'], embeddings, train_sample['variant'], embeddings_type=embeddings_type, add_score=add_score)
+                else: # model is Tranception
+                    X_train = get_features(train_sample['sequence'], None, train_sample['variant'], embeddings_type=embeddings_type, add_score=False)
+                    X_train = np.concatenate([X_train, train_sample['t_score'].to_numpy().reshape(-1, 1)], axis=1)
+                
                 y_train = train_sample['fitness'].to_numpy()
                 
                 ridge = Ridge()
