@@ -33,7 +33,7 @@ MODEL_PATH = './data/eqgat_debug.ckpt'
 EMBEDDINGS_PATH = './data/dummy_embeddings'
 DATA_DIR = '/Users/antoniaboca/partIII-amino-acid-prediction/data'
 AA_INDEX = './protein_engineering/utils/aa_index_pca19.npy'
-TRANCEPTION = './data/ProteinGym_Tranception_scores/substitutions'
+TRANCEPTION = './data/substitutions'
 
 RANDOM_SEEDS = [
       42,	6731,	7390,	2591,	7886,
