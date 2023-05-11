@@ -17,6 +17,9 @@ from torch_geometric.loader import DataLoader as geom_DataLoader
 from Bio.Data.IUPACData import protein_letters_1to3
 
 from sklearn.linear_model import Ridge
+from sklearn.preprocessing import StandardScaler
+from sklearn.compose import ColumnTransformer
+from sklearn.pipeline import Pipeline
 from sklearn.model_selection import cross_val_score
 
 from gvp_antonia.main import ModelWrapper
@@ -30,7 +33,7 @@ MODEL_PATH = './data/eqgat_debug.ckpt'
 EMBEDDINGS_PATH = './data/dummy_embeddings'
 DATA_DIR = '/Users/antoniaboca/partIII-amino-acid-prediction/data'
 AA_INDEX = './protein_engineering/utils/aa_index_pca19.npy'
-TRANCEPTION = './data/substitutions'
+TRANCEPTION = './data/ProteinGym_Tranception_scores/substitutions'
 
 RANDOM_SEEDS = [
       42,	6731,	7390,	2591,	7886,
@@ -121,10 +124,11 @@ def get_features(
         raise NotImplementedError('Unknown amino-acid embedding for feature creation.')
 
     if not add_score:
-        return features
+        return features, []
+
     confidences = np.array(variants.apply(lambda x:int(scores[int(x[1:-1])][_1toInt(x[-1])]) if x != '' else 0)).reshape(-1, 1)
-    total_feats = np.concatenate([features, confidences], axis=1)
-    return total_feats
+    # total_feats = np.concatenate([features, confidences], axis=1)
+    return features, confidences
     
 def ridge_regression(
     wildtype : DirectedEvolutionDataset,
@@ -157,6 +161,7 @@ def ridge_regression(
     dataset_dir = os.path.join(work_dir, dataset.name)
     if not os.path.exists(dataset_dir):
         os.makedirs(dataset_dir)
+
     if model in ['eqgat', 'gvp']:
         loader = geom_DataLoader(dataset, **loader_kwargs)
         example = next(iter(loader))
@@ -170,14 +175,13 @@ def ridge_regression(
         df = df[~mask]
         scores = df['Tranception_L_retrieval']
         df = df.rename(columns={'Tranception_L_retrieval': 't_score', 'mutant': 'variant'})
-    # test_sample = wildtype.data.sample(frac=0.2)
-    # training_data_full = wildtype.data.drop(test_sample.index)
-    # mask = ~(training_data_full['variant'].str.contains(','))
 
     # NOTE: we only work with single-mutants. ProteinMPNN does not know how to handle other types of mutants    
     mask = ~(wildtype.data['variant'].str.contains(','))
     single_mutant = wildtype.data[mask].reset_index(drop=True)
-    
+    if not add_score:
+        model = 'basic'
+
     if model == 'tranception':
         single_mutant = single_mutant.merge(df[['variant', 't_score']], on='variant', how='inner')
 
@@ -195,36 +199,78 @@ def ridge_regression(
             for iteration in range(iterations):
                 test_sample = single_mutant.sample(frac=0.2, random_state=RANDOM_SEEDS[iteration])
                 if model in ['eqgat', 'gvp']:
-                    X_test = get_features(test_sample['sequence'], embeddings, test_sample['variant'], embeddings_type=embeddings_type, add_score=add_score)
+                    X_test_A, X_test_B = get_features(test_sample['sequence'], embeddings, test_sample['variant'], embeddings_type=embeddings_type, add_score=add_score)
                 else: # model is Tranception
-                    X_test = get_features(test_sample['sequence'], None, test_sample['variant'], embeddings_type=embeddings_type, add_score=False)
-                    X_test = np.concatenate([X_test, test_sample['t_score'].to_numpy().reshape(-1, 1)], axis=1)
+                    X_test_A, _ = get_features(test_sample['sequence'], None, test_sample['variant'], embeddings_type=embeddings_type, add_score=False)
+                    X_test_B = test_sample['t_score'].to_numpy().reshape(-1, 1)
                 
                 y_test = test_sample['fitness'].to_numpy()
                 y_wt =  wildtype.data[wildtype.data['is_wildtype'] == True].iloc[0]['fitness']
                 
                 training_data = single_mutant.drop(test_sample.index)
                 train_sample = training_data.sample(n=N, random_state=RANDOM_SEEDS[iteration])
+
                 if model in ['eqgat', 'gvp']:
-                    X_train = get_features(train_sample['sequence'], embeddings, train_sample['variant'], embeddings_type=embeddings_type, add_score=add_score)
+                    X_train_A, X_train_B = get_features(train_sample['sequence'], embeddings, train_sample['variant'], embeddings_type=embeddings_type, add_score=add_score)
                 else: # model is Tranception
-                    X_train = get_features(train_sample['sequence'], None, train_sample['variant'], embeddings_type=embeddings_type, add_score=False)
-                    X_train = np.concatenate([X_train, train_sample['t_score'].to_numpy().reshape(-1, 1)], axis=1)
-                
+                    X_train_A, _ = get_features(train_sample['sequence'], None, train_sample['variant'], embeddings_type=embeddings_type, add_score=False)
+                    X_train_B = train_sample['t_score'].to_numpy().reshape(-1, 1)
                 y_train = train_sample['fitness'].to_numpy()
+
                 
-                ridge = Ridge()
                 cv_scores = []
                 alphas = [0.001, 0.01, 0.1, 0.2, 0.3, 0.5, 1.0, 2.0]
                 for alpha in alphas:
-                    ridge.set_params(alpha=alpha)
+                    if add_score:
+                        scaler_a = StandardScaler() 
+                        scaler_b = StandardScaler()  
+
+                        preprocessor = ColumnTransformer(
+                        transformers=[
+                            ('scaler_a', scaler_a, slice(0, X_train_A.shape[-1])),
+                            ('scaler_b', scaler_b, slice(X_train_A.shape[-1], X_train_A.shape[-1] + 1))
+                        ])
+
+                        ridge = Pipeline(steps=[
+                            ('preprocessor', preprocessor),
+                            ('regressor', Ridge(alpha=alpha))
+                        ])
+                    else:
+                        ridge = Ridge(alpha=alpha)
+
+                    if add_score:
+                        X_train = np.concatenate([X_train_A, X_train_B], axis=1)
+                    else:
+                        X_train = X_train_A
+
                     scores = cross_val_score(ridge, X_train, y_train)
                     cv_scores.append(scores.mean())
-
                     best_alpha = alphas[np.argmax(cv_scores)]
-                
-                ridge.set_params(alpha=best_alpha)
+
+                # AFTER CROSS VALIDATION EVALUATE
+                if add_score:
+                    scaler_a = StandardScaler() 
+                    scaler_b = StandardScaler()  
+
+                    preprocessor = ColumnTransformer(
+                    transformers=[
+                        ('scaler_a', scaler_a, slice(0, X_train_A.shape[-1])),
+                        ('scaler_b', scaler_b, slice(X_train_A.shape[-1], X_train_A.shape[-1] + 1))
+                    ])
+
+                    ridge = Pipeline(steps=[
+                        ('preprocessor', preprocessor),
+                        ('regressor', Ridge(alpha=best_alpha))
+                    ])
+                else:
+                    ridge = Ridge(alpha=alpha)
+                    
                 ridge.fit(X_train, y_train)
+                if add_score:
+                    X_test = preprocessor.transform(np.concatenate([X_test_A, X_test_B], axis=1))
+                else:
+                    X_test = X_test_A
+
                 y_pred = ridge.predict(X_test)
 
                 test_sample[f'{model}_ridge_prediction'] = y_pred
