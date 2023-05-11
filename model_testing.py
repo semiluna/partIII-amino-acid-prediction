@@ -18,18 +18,19 @@ import pytorch_lightning as pl
 
 
 class RESDataset(IterableDataset):
-    def __init__(self, dataset_path, max_len=None, sample_per_item=None, shuffle=False):
+    def __init__(self, dataset_path, max_len=None, sample_per_item=None, shuffle=False, start=0):
         self.dataset = LMDBDataset(dataset_path)
         self.graph_builder = AtomGraphBuilder(_element_mapping)
         self.shuffle = shuffle
         self.max_len = max_len
+        self.start = start
         self.sample_per_item = sample_per_item
 
     def __iter__(self):
         length = len(self.dataset)
         if self.max_len:
             length = min(length, self.max_len)
-        indices = list(range(length))
+        indices = list(range(self.start, length))
         worker_info = torch.utils.data.get_worker_info()
         if worker_info is None:
             gen = self._dataset_generator(indices)
@@ -130,6 +131,8 @@ if __name__ == '__main__':
     parser.add_argument('--data_file')
     parser.add_argument('--batch_size', type=int, default=16)
     parser.add_argument('--model', type=str, default='eqgat')
+    parser.add_argument('--start', type=int, default=0)
+    parser.add_argument('--max_len', type=int, default=None)
     args = parser.parse_args()
 
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -137,7 +140,7 @@ if __name__ == '__main__':
     model_path = args.model_path
     n_layers = 5
     data_file = args.data_file
-    test_dataset = RESDataset(os.path.join(data_file, 'test'))
+    test_dataset = RESDataset(os.path.join(data_file, 'test', max_len=args.max_len, start=args.start))
     test_dataloader = geom_DataLoader(test_dataset, num_workers=8, batch_size=args.batch_size)
     example = next(iter(test_dataset))
 

@@ -198,6 +198,7 @@ class ModelWrapper(pl.LightningModule):
 
         cm = tm.functional.classification.multiclass_confusion_matrix(total_preds, total_labels, num_classes=20)
         print(cm)
+        print(f'Total graphs: {total_graphs} | Correct graphs: {correct_graphs}')
         acc = 1.0 * correct_graphs / total_graphs
         total_loss /= len(outputs)
 
