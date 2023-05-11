@@ -33,7 +33,7 @@ MODEL_PATH = './data/eqgat_debug.ckpt'
 EMBEDDINGS_PATH = './data/dummy_embeddings'
 DATA_DIR = '/Users/antoniaboca/partIII-amino-acid-prediction/data'
 AA_INDEX = './protein_engineering/utils/aa_index_pca19.npy'
-TRANCEPTION = './data/ProteinGym_Tranception_scores/substitutions'
+TRANCEPTION = './data/substitutions'
 
 RANDOM_SEEDS = [
       42,	6731,	7390,	2591,	7886,
@@ -198,7 +198,7 @@ def ridge_regression(
 
             for iteration in range(iterations):
                 test_sample = single_mutant.sample(frac=0.2, random_state=RANDOM_SEEDS[iteration])
-                if model in ['eqgat', 'gvp']:
+                if model in ['eqgat', 'gvp', 'basic']:
                     X_test_A, X_test_B = get_features(test_sample['sequence'], embeddings, test_sample['variant'], embeddings_type=embeddings_type, add_score=add_score)
                 else: # model is Tranception
                     X_test_A, _ = get_features(test_sample['sequence'], None, test_sample['variant'], embeddings_type=embeddings_type, add_score=False)
@@ -210,7 +210,7 @@ def ridge_regression(
                 training_data = single_mutant.drop(test_sample.index)
                 train_sample = training_data.sample(n=N, random_state=RANDOM_SEEDS[iteration])
 
-                if model in ['eqgat', 'gvp']:
+                if model in ['eqgat', 'gvp', 'basic']:
                     X_train_A, X_train_B = get_features(train_sample['sequence'], embeddings, train_sample['variant'], embeddings_type=embeddings_type, add_score=add_score)
                 else: # model is Tranception
                     X_train_A, _ = get_features(train_sample['sequence'], None, train_sample['variant'], embeddings_type=embeddings_type, add_score=False)
