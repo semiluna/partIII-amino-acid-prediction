@@ -11,7 +11,7 @@
 \newif\ifsubmission % Boolean flag for distinguishing submitted/final version
 
 % Change the following lines to your own project title, name, college, course
-\title{Residue identity prediction from an amino-acid residue's atomic-environment with equivariant graph machine learning}
+\title{Structure-informed protein engineering using equivariant graph neural networks}
 \author{Antonia-Irina Boca}
 \date{May 2023}
 \newcommand{\candidatenumber}{2485A}
@@ -26,7 +26,7 @@
 % For the final version (with your name) leave the above commented.
 
 \begin{document}
-
+% \printlength\textwidth
 \begin{sffamily} % use a sans-serif font for the pro-forma cover sheet
 
 \begin{titlepage}
@@ -164,21 +164,7 @@ support of \ldots [optional]
 \chapter{Introduction}
 
 \label{firstcontentpage} % start page count here
-
-This is the introduction where you should introduce your work. In
-general the thing to aim for here is to describe a little bit of the
-context for your work -- why did you do it (motivation), what was the
-hoped-for outcome (aims) -- as well as trying to give a brief overview
-of what you actually did.
-
-It's often useful to bring forward some ``highlights'' into this
-chapter (e.g.\ some particularly compelling results, or a particularly
-interesting finding).
-
-It's also traditional to give an outline of the rest of the document,
-although without care this can appear formulaic and tedious. Your
-call.
-
+\input{masters-report/chapters/introduction}
 \chapter{Background}
 
 \input{chapters/background.tex}
@@ -216,12 +202,8 @@ your own personal preference.
 \input{chapters/design_implementation.tex}
 
 \chapter{Evaluation}
-
-For any practical projects, you should almost certainly have some kind
-of evaluation, and it's often useful to separate this out into its own
-chapter.
-
-\input{chapters/evaluation.tex}
+\label{results}
+\input{masters-report/chapters/evaluation}
 
 
 \chapter{Summary and conclusions}
