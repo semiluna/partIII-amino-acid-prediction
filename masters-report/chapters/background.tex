@@ -93,10 +93,45 @@ These datasets have been tailored to function as a benchmark for machine learnin
 First proposed by \citet{rosenblatt1958}, neural networks are a type of machine learning model that is inspired by the structure and function of the human brain. 
 They are used for various tasks, such as image and speech recognition, natural language processing, and biomolecular prediction among others.
 
-At a high level, neural networks consist of interconnected nodes or neurons organised into layers. Each neuron receives input data, applies a mathematical operation to it, and produces an output. These operations are typically weighted sums followed by activation functions that introduce non-linearity into the model. 
-The outputs from one layer of neurons serve as inputs to the next layer, forming a hierarchical structure. The resulting predictions made by the model are then scored using a \textit{loss function}.
+\subsection{The multi-layer perceptron}
+The most basic neural network model is the \textbf{feedforward neural network}, also known as the multi-layer perceptron (MLP). At a high level, this network consists of multiple layers that apply mathematical transformations to the data, with the outputs of one layer serving as inputs to the next. Borrowing some notation from \citet{bishop2006pattern}, the MLP receives as input a series of input variables $x_1, x_2, \dots, x_D$ and first applies M linear transformations as:
+\begin{equation}
+    a_j = \sum_{j=1}^D w_{ji}^{(1)}x_i + w_{j0}^{(1)}
+\label{mlp-layer1}
+\end{equation}
+for $j = 1,\dots,M$, with the surperscript (1) indicating the that this is the first layer of the network. The \textit{activations} $a_j$ are then pased through a differentiable activation function $h(\cdot)$, rendering $z_j = h(a_j)$. This process can be repeated to give a second round of unit activations as follows:
+\begin{equation}
+    y_k = \sum_{j=1}^Mw_{kj}^{(2)}z_j + w_{k0}^{(2)}
+\label{mlp-layer2}
+\end{equation}
+Where $K$ represents the total number of outputs. The linear transformations presented in Equations \ref{mlp-layer1} and \ref{mlp-layer2} form together an MLP with \textit{one hidden layer} of dimension $M$, an input of dimension $D$, a hidden layer of and an output of dimension $K$. Figure \ref{mlp} illustrates the information flow through an MLP. 
+\begin{figure}
+    \centering
+    \includegraphics[scale=0.75]{masters-report/figures/mlp.png}
+    \caption{Information flow in a multi-layer perceptron with a 3-dimensional input, a hidden dimension of 4 and an output dimension of 2.}
+    \label{mlp}
+\end{figure}
+\paragraph{Activation functions.} Activation functions are mathematical functions applied to the output of a neuron in a neural network. They introduce non-linearities into the network, allowing it to model complex relationships between inputs and outputs.
+There are many commonly used instantiations of the activation function $h(\cdot)$. The two types used in this project are:
+\begin{itemize}
+    \item The Rectified Linear Unit (ReLU), first proposed by \citet{relu}: $h(x)=\max\{0, x\}$;
+    \item The Sigmoid Linear Unit (SiLU), first proposed by \citet{gelu}: $h(x) = x\times\sigma(x)$, where $\sigma(x) = \frac{1}{1 + e^{-x}}$. 
+\end{itemize}
+A visualisation of their behaviour is presented in Figure \ref{relu-silu}.
+\begin{figure}
+    \centering
+    \includegraphics[scale=0.5]{masters-report/figures/silu-relu.png}
+    \caption{The behaviour of the ReLU and SiLU activation functions. Image taken from \cite{silu}.}
+    \label{relu-silu}
+\end{figure}
+\subsection{Training neural networks}
+The outputs $y_k$ of Equation \ref{mlp-layer2}, also known as the predictions made by the model, are scored using a \textit{loss function}. The loss function depends on the task at hand; for example, a common loss function for classification is the cross entropy between the training data and the model distribution:
+\begin{equation}
+    \mathcal{L} = -\mathbb{E}_{\mathbf{x}, \mathbf{y}\sim \hat{p}_\text{data}}\log p_{\text{MLP}}(\mathbf{y}|\mathbf{x})
+\end{equation}
+where $\mathbf{x}$ is a set of training samples with sample $i$ denoted by $\mathbf{x}_i = [x_{i, 1}, x_{i, 2},\dots x_{i, D}]$, and $\mathbf{y}$ a set of outputs. 
 
-The training process in neural networks involves two steps. First, the derivative of the loss function with respect to each weight is computed, using the \textit{backpropagation algorithm} \citep{backpropagation1}. This provides the gradient information needed for the next step. The second stage is the weight update, typically done using a gradient descent technique. 
+This loss value is then used to adjust the weights of the neural network in a process called \textit{training}. The training process in neural networks involves two steps. First, the derivative of the loss function with respect to each weight is computed, using the \textit{backpropagation algorithm} \citep{backpropagation1}. This provides the gradient information needed for the next step. The second stage is the weight update, typically done using a gradient descent technique. In this work, we use the Adam algorithm, first proposed by \cite{adam}.
 
 \subsection{Graph Neural Networks}
 {\color{blue}Maybe flesh this out later.}
@@ -148,8 +183,4 @@ Simiarly, we consider the entire GNN model $f(\mathbf{H}, \mathbf{X}, \mathbf{A}
     f(\mathbf{H}, {\color{blue}\mathbf{X}}, \mathbf{A}) &= f(\mathbf{H}, {\color{blue}\mathbf{X}^{\ell}\mathbf{Q}^{\top}}, \mathbf{A}) \\
     f(\mathbf{H},  {\color{green!60!black}\mathbf{X}^{\ell}}, \mathbf{A}) &= f(\mathbf{H}, {\color{green!60!black}\mathbf{X}+ \mathbf{1}_n^{\top}\mathbf{t}}, \mathbf{A})
 \end{align}
-
-\paragraph{Higher-order features and equivariance.}
-{\color{red} TODO? if I end up using the equiformer}
-
 
