@@ -101,6 +101,7 @@ def mutation_scoring(
     correct_only : bool = False,
     top_k : int = 4,
     af_only: bool = False,
+    full_structure : bool = True,
     **loader_kwargs,
 ):
     assert model in ['eqgat', 'gvp'], 'Unrecognised model.'
@@ -111,7 +112,8 @@ def mutation_scoring(
         wildtype, 
         mapper, 
         structure_dir=os.path.join(data_dir, 'ProteinGym_assemblies_clean'),
-        alphafold_only = af_only
+        alphafold_only = af_only,
+        full_structure = full_structure,
     )
 
     if dataset.skip:
@@ -240,11 +242,12 @@ if __name__ == '__main__':
     parser.add_argument('--batch_size', type=int, default=1)
     parser.add_argument('--AF_only', action='store_true', default=False)
     parser.add_argument('--correct_only', action='store_true', default=False)
+    parser.add_argument('--local_structure', action='store_true', default=False)
     args = parser.parse_args()
 
     mapper = pd.read_csv(args.mapper)
     
-    work_dir = os.path.join(args.out_dir, 'mutation_generation', args.model, f'AF_only={args.AF_only}-correct_only={args.correct_only}')
+    work_dir = os.path.join(args.out_dir, 'mutation_generation', args.model, f'AF_only={args.AF_only}-correct_only={args.correct_only}-full_structure={not args.local_structure}')
     if not os.path.exists(work_dir):
         os.makedirs(work_dir)
 
@@ -255,12 +258,16 @@ if __name__ == '__main__':
             try:
                 print(file)
                 dataset = ProteinGymDataset(Path(file))
-                mutation_scoring(dataset, mapper, work_dir, model=args.model, model_path=args.model_path, data_dir=args.out_dir, batch_size=args.batch_size, af_only=args.AF_only, correct_only=args.correct_only)
+                mutation_scoring(dataset, mapper, work_dir, 
+                            model=args.model, model_path=args.model_path, data_dir=args.out_dir, 
+                            batch_size=args.batch_size, af_only=args.AF_only, correct_only=args.correct_only, full_structure=(not args.local_structure))
             except Exception as e:
                 print(f'Failed on {file}. Error message: \n{e}')
                 failed.append(Path(file).stem)
         print(f'Failed on {len(failed)} datasets: {failed}')
     else:
         dataset = ProteinGymDataset(Path(args.dataset))
-        mutation_scoring(dataset, mapper, work_dir, model=args.model, model_path=args.model_path, data_dir=args.out_dir, batch_size=args.batch_size, af_only=args.AF_only, correct_only=args.correct_only)
+        mutation_scoring(dataset, mapper, work_dir, 
+                        model=args.model, model_path=args.model_path, data_dir=args.out_dir, 
+                        batch_size=args.batch_size, af_only=args.AF_only, correct_only=args.correct_only, full_structure=(not args.local_structure))
 

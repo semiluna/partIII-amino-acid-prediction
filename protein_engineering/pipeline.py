@@ -12,6 +12,7 @@ import pandas as pd
 from typing import Union
 from tqdm import tqdm
 
+import scipy
 import torch
 from torch.nn import Softmax
 from biopandas.pdb import PandasPdb
@@ -86,6 +87,8 @@ _codes = lambda x: {
 # TODO STEP 1: recover the structure
 _3to1 = lambda aa: protein_letters_3to1[aa.capitalize()]
 
+gly_CB_mu = np.array([-0.5311191 , -0.75842446,  1.2198311 ], dtype=np.float32)
+
 
 # TODO STEP 2: mask out every amino-acid in a dataframe / graph
 # I am assuming .pdb incoming files
@@ -118,14 +121,17 @@ class AADataset(IterableDataset):
                 mapper : pd.DataFrame, 
                 max_len : int = None, 
                 structure_dir : Union[str, pathlib.Path] = STRUCTURE_PATH,
-                alphafold_only : bool = False):
+                alphafold_only : bool = False, 
+                full_structure : bool = True):
 
         self.max_len = max_len
         self.graph_builder = AtomGraphBuilder(_element_alphabet)
         self.sequence = wildtype.data[wildtype.data['is_wildtype'] == True].iloc[0]['sequence']
         self.name = wildtype.name
         self.skip = False
+        self.use_af = False
         self.residues = len(self.sequence)
+        self.full_structure = full_structure
 
         hetero_oligomer = mapper[mapper['name'] == self.name]['is_hetero_oligomer'].iloc[0]
         structure_exists = mapper[mapper['name'] == self.name]['structure_exists'].iloc[0]
@@ -179,6 +185,7 @@ class AADataset(IterableDataset):
             af_sequence = list(get_sequence(af).values())[0]
             if len(af_sequence) >= len(self.sequence):
                 pdb = af_struct
+                self.use_af = True
 
         if pdb is None:
             self.skip = True
@@ -216,22 +223,38 @@ class AADataset(IterableDataset):
     def _dataset_generator(self, res_ids):
         pdb = self.pdb
         for res_id in res_ids:
+
             to_remove = (pdb['residue_number'] == res_id) & (~pdb['name'].isin(['N', 'CA', 'O', 'C'])) 
             my_atoms = pdb[~to_remove].reset_index(drop=True)
-            label = pdb[(pdb['residue_number'] == res_id) & (pdb['name'] == 'CA')]['resname'].iloc[0]
-            ca_idx = np.where((my_atoms['residue_number'] == res_id) & (my_atoms['name'] == 'CA'))[0]
+            label = pdb[(pdb['residue_number'] == res_id) & (pdb['name'] == 'CA')]['resname'].iloc[0]  
+
+            if not self.full_structure:
+                # NOTE: if it is an assembly, we just choose one local chain 
+                kd_tree = scipy.spatial.KDTree(my_atoms[['x','y','z']].to_numpy())
+
+                res_mask = ((my_atoms['residue_number'] == res_id) & (my_atoms['name'] == 'CA'))
+                CA_pos = np.array(my_atoms[res_mask][['x', 'y', 'z']])[0]
+                CB_pos = CA_pos + (np.ones_like(CA_pos) * gly_CB_mu)
+                
+                local_env = kd_tree.query_ball_point(CB_pos, r=10.0*np.sqrt(3), p=2.0)
+                my_atoms = my_atoms.loc[sorted(local_env)].reset_index(drop=True)
+
+            res_mask = ((my_atoms['residue_number'] == res_id) & (my_atoms['name'] == 'CA'))
+            ca_idx = np.where(res_mask)[0]   
+
             if len(ca_idx) == 1: 
                 ca_idx = int(ca_idx) 
             else:
-                # THIS IS A HOMOMERIC ASSEMBLY. WE MASKED ALL COPIES OF THE SAME RESIDUE.
-                ca_idx = torch.tensor(ca_idx).unsqueeze(0)               
-
+                if self.full_structure:
+                    # THIS IS A HOMOMERIC ASSEMBLY. WE MASKED ALL COPIES OF THE SAME RESIDUE.
+                    ca_idx = torch.tensor(ca_idx).unsqueeze(0)    
+                else:
+                    ca_idx = int(ca_idx[0])     
+            
             graph = self.graph_builder(my_atoms)
             graph.label = _amino_acids(label)
             graph.ca_idx = ca_idx
             graph.masked_res_id = res_id
-            # graph.name = self.name
-            # graph.sequence = self.sequence
 
             yield graph
 
