@@ -7,7 +7,7 @@ from dataclasses import dataclass
 from math import comb
 from typing import Sequence, List, Union
 
-from gvp_antonia.proteins import STANDARD_AMINO_ACIDS
+from res_task.proteins import STANDARD_AMINO_ACIDS
 
 import numpy as np
 

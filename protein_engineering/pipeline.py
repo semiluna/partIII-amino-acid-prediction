@@ -22,8 +22,8 @@ from torch.utils.data import DataLoader, IterableDataset
 from torch_geometric.loader import DataLoader as geom_DataLoader
 import biotite.structure as bs
 
-from gvp_antonia.utils.biotite_utils import *
-from gvp_antonia.protein_graph import AtomGraphBuilder, _element_alphabet
+from res_task.utils.biotite_utils import *
+from res_task.protein_graph import AtomGraphBuilder, _element_alphabet
 from protein_engineering.protein_gym import ProteinGymDataset
 from protein_engineering.utils.ired_dataset import IRED
 

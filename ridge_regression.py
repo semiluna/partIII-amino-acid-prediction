@@ -22,7 +22,7 @@ from sklearn.compose import ColumnTransformer
 from sklearn.pipeline import Pipeline
 from sklearn.model_selection import cross_val_score
 
-from gvp_antonia.main import ModelWrapper
+from res_task.main import ModelWrapper
 from protein_engineering.pipeline import AADataset
 from protein_engineering.utils.de_dataset import DirectedEvolutionDataset
 from protein_engineering.protein_gym import ProteinGymDataset

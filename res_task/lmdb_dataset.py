@@ -21,7 +21,7 @@ import atom3d.util.rosetta as ar
 import atom3d.util.file as fi
 import atom3d.util.formats as fo
 
-from gvp_antonia.utils.serialisation import serialise, deserialise
+from res_task.utils.serialisation import serialise, deserialise
 logger = logging.getLogger(__name__)
 
 

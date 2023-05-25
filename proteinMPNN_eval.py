@@ -13,7 +13,7 @@ import biotite.structure as bs
 
 from protein_engineering.protein_gym import ProteinGymDataset
 from protein_engineering.models.ProteinMPNN.protein_mpnn_utils import ProteinMPNN, _scores
-from gvp_antonia.utils.biotite_utils import *
+from res_task.utils.biotite_utils import *
 
 MODEL_WEIGHTS = './protein_engineering/models/ProteinMPNN/vanilla_model_weights'
 DATA_PATH = './data/ProteinGym_substitutions'

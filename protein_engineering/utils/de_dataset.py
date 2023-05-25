@@ -15,7 +15,7 @@ import torch
 # from src.encodings.encoder import Encoder
 # from src.utils.logutils import get_logger
 # from src.utils.mutations import compute_mutation_coverage_at_order
-from gvp_antonia.proteins import STANDARD_AMINO_ACIDS
+from res_task.proteins import STANDARD_AMINO_ACIDS
 
 
 

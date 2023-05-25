@@ -1,11 +1,11 @@
 import torch
 import os
 import argparse
-from gvp_antonia.main import ModelWrapper
-from gvp_antonia.lmdb_dataset import LMDBDataset
-from gvp_antonia.protein_graph import AtomGraphBuilder
-from gvp_antonia.models.gvp import RES_GVP
-from gvp_antonia.models.eqgat import RES_EQGATModel
+from res_task.main import ModelWrapper
+from res_task.lmdb_dataset import LMDBDataset
+from res_task.protein_graph import AtomGraphBuilder
+from res_task.models.gvp import RES_GVP
+from res_task.models.eqgat import RES_EQGATModel
 
 
 from torch_geometric.loader import DataLoader as geom_DataLoader

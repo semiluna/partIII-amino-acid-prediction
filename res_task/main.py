@@ -31,14 +31,14 @@ from pytorch_lightning.callbacks import ModelCheckpoint, LearningRateMonitor
 from pytorch_lightning.plugins.environments import SLURMEnvironment
 
 # from atom3d.datasets import LMDBDataset
-from gvp_antonia.lmdb_dataset import LMDBDataset
+from res_task.lmdb_dataset import LMDBDataset
 
-from gvp_antonia.models.equiformer import GraphAttentionTransformer
-from gvp_antonia.models.gvp import RES_GVP
+from res_task.models.equiformer import GraphAttentionTransformer
+from res_task.models.gvp import RES_GVP
 # from gvp_antonia.models.mace import RES_MACEModel
-from gvp_antonia.models.eqgat import RES_EQGATModel
+from res_task.models.eqgat import RES_EQGATModel
 
-from gvp_antonia.protein_graph import AtomGraphBuilder, _element_alphabet
+from res_task.protein_graph import AtomGraphBuilder, _element_alphabet
 
 DATASET_PATH = '/Users/antoniaboca/Downloads/split-by-cath-topology/data'
 CHECKPOINT_PATH = os.environ.get("PATH_CHECKPOINT", "saved_models/")

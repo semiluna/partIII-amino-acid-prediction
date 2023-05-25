@@ -13,7 +13,7 @@ import pytorch_lightning as pl
 from torch_geometric.loader import DataLoader as geom_DataLoader
 from Bio.Data.IUPACData import protein_letters_3to1, protein_letters_1to3
 
-from gvp_antonia.main import ModelWrapper
+from res_task.main import ModelWrapper
 
 from protein_engineering.protein_gym import ProteinGymDataset
 from protein_engineering.utils.de_dataset import DirectedEvolutionDataset
