@@ -1,10 +1,12 @@
+This project lies at the intersection of two research areas: protein engineering and graph neural networks. Section \ref{sec:biological-background} introduce the necessary biological background required to understand the approach taken to generate viable mutations, while Section \ref{sec:machine-learning} introduces the fundamental principles of machine learning, as well as the particular frameworks used in the development of graph neural networks. 
 \section{Biological background}
-\subsection{Amino-acid residues}
+\label{sec:biological-background}
+\subsection{Amino acid residues}
 \label{amino-acids}
-\textbf{Amino acids} are the building blocks of proteins and play a fundamental role in various biological processes. These small organic molecules are essential for life, and their unique properties allow them to form complex and diverse structures within the body. 
+\textbf{Amino acids} are the building blocks of proteins and play a fundamental role in various biological processes.
 All amino acids follow the same underlying pattern and consist of a central carbon atom (C), an \textit{amino} group ($\text{NH}_3$), a \textit{carboxyl} group (COOH), and a variable side-chain, as we can see in Figure \ref{fig:amino-acid}.
-Chains of amino acids are formed through a chemical reaction that creates a \textit{peptide bond}, as shown in Figure \ref{fig:residue}. The portions left of the original amino acids are called \textit{residues}. Note that there are 20 naturally occuring amino acids.
-\begin{figure}
+Chains of amino acids are formed through a chemical reaction that creates a \textit{peptide bond}, as shown in Figure \ref{fig:residue}. The portions left of the original amino acids are called \textit{residues}. Note that there are 20 naturally occurring amino acids.
+\begin{figure}[!h]
     \centering
     \includegraphics[scale=0.5]{figures/amino-acid.png}
     \caption{The basic chemical structure of an amino acid. Carbon atoms are black, Oxygen is dark grey, Nitrogen light grey, and hydrogen white. Image taken from \cite{hunter1993molecular}.}
@@ -23,164 +25,183 @@ Chains of amino acids are formed through a chemical reaction that creates a \tex
     \node[below of=residue, yshift=-0.7cm, xshift=-1.5cm] (res1) {\textit{residue 1}};
     \node[below of=residue, yshift=-0.7cm, xshift=1.5cm] (res1) {\textit{residue 2}};
     \end{tikzpicture}
-    \caption{Two amino-acids are chained together through a peptide bond. The chemical reaction releases a water molecule ($\text{H}_2\text{O}$) in the process.}
+    \caption{Two amino acids are chained together through a peptide bond. The chemical reaction releases a water molecule ($\text{H}_2\text{O}$) in the process.}
     \label{fig:residue}
 \end{figure}
 
 \subsection{Proteins}
-Multiple amino-acids chained together through peptide bonds form a \textit{polypeptide chain}.
+Multiple amino acids chained together through peptide bonds form a \textit{polypeptide chain}.
 These chains fold into shapes, forming \textbf{proteins}. 
-Proteins are one of the most important macromolecules found in living organisms and they are involved in a vast array of biological processes. 
-Proteins play a variety of roles in the body, including catalysing chemical reactions, transporting molecules, providing structural support, and regulating gene expression. 
-The diversity of protein structures and functions is vast, with some proteins consisting of just a few amino acids, while others contain thousands. 
+They are one of the most important macromolecules found in living organisms and are involved in a vast array of biological processes. 
 The unique sequence of amino acids in each protein determines its three-dimensional structure and, more importantly, its \textit{specific function}. 
 Understanding the structure and function of proteins is essential for advancing our knowledge of cellular processes and for developing treatments for a range of diseases caused by protein dysfunction.
 
-\paragraph{Biological assemblies.}
+\paragraph{Protein complexes.}
 Proteins can further fold together into protein complexes, also known as \textit{biological assemblies}.
 These assemblies can be composed of multiple copies of the same protein (\textit{homomeric assemblies}) or different protein molecules (\textit{heteromeric assemblies}).
 Heteromeric assemblies can also contain other types of molecules, such as  nucleic acids or lipids. Figure \ref{assembly} shows an example of a homomeric assembly.
-\begin{figure}
+\begin{figure}[!h]
     \centering
-    \subfigure[The 2UXY molecule. It is formed of a single chain of amino-acid residues.]{
-        \includegraphics[scale=0.3]{figures/2uxy.png}
+    \subfigure[\raggedright The 2UXY molecule. It is formed of a single chain of amino acid residues.]{
+        \includegraphics[width=0.35\textwidth]{figures/2uxy.png}
         \label{homomer}
     }
     \hspace{0.3in}
-    \subfigure[The \textit{aliphatic amidase} assembly, formed of 6 copies of the 2UXY chain.]{
-        \includegraphics[scale=0.3]{figures/2uxy_assembly.png}
+    \subfigure[\raggedright The \textit{aliphatic amidase} assembly, formed of 6 copies of the 2UXY chain.]{
+        \includegraphics[width=0.35\textwidth]{figures/2uxy_assembly.png}
     }
     \caption{Example of (a) one homomer and  (b) the homomeric assembly it forms.}
     \label{assembly}
 \end{figure}
 
-\paragraph{Protein engineering.}
-Protein engineering is the task of designing new proteins that have specific functions.
-One way in which we can perform protein engineering is by swapping out amino-acid residues within a chain with potentially more efficient ones.
-This approach involves particularly challenging design choices when dealing with biological assemblies: while we can isolate a monomer in the lab to study its properties, in real life this monomer will not function by itself, but rather bind to other proteins to execute a certain function.
-Hence, when performing a mutation on a single-chain protein that is known to be part of a biological assembly, we must propagate this mutation to all other instances of this protein within the assembly.
-
 \paragraph{Protein representations.}
 The structure of a protein can be classified into the primary, secondary, and tertiary structure:
 \begin{enumerate}
 \item The primary structure of a protein refers to the linear sequence of amino acids in the protein chain. 
-It is determined by the specific order of amino acids linked together by peptide bonds, forming the polypeptide chain. The primary structure of a protein is the most basic level of protein structure and dictates the overall chemical properties and function of the protein.
+It is determined by the specific order in which amino acids are linked together by peptide bonds, forming the polypeptide chain.
+I will refer to the primary structure as the \textbf{protein sequence} throughout this project.
 \item Next, the secondary structure of a protein refers to the local folding patterns or motifs that arise from interactions between nearby amino acids in the polypeptide chain. 
 The most common types of secondary structures are alpha helices and beta sheets.
-\item Lastly, the tertiary structure of a protein refers to the overall three-dimensional arrangement of the polypeptide chain, including the long-range interactions and folding patterns that determine the protein's geometric shape. 
-The tertiary structure is stabilised by various interactions, including hydrogen bonding, disulfide bonds, van der Waals forces, hydrophobic interactions, and electrostatic interactions. The tertiary structure is critical for the protein's function and determines its specific shape, stability, and activity.
+\item Lastly, the tertiary structure of a protein refers to the overall three-dimensional arrangement of the polypeptide chain.
+The tertiary structure is stabilised by various interactions, including hydrogen bonding, disulfide bonds, van der Waals forces, hydrophobic interactions, and electrostatic interactions. The tertiary structure is critical for the protein's function and determines its stability and activity. I will  refer to the tertiary structure as simply the \textbf{protein structure} throughout this project.
 \end{enumerate}
 
-The \textbf{Protein Data Bank} (PDB) is a publicly accessible online repository that stores and provides access to three-dimensional structural data of biological macromolecules, primarily proteins and nucleic acids. 
-The PDB is a global resource that serves as a central repository for experimentally determined structures of biomolecules obtained through techniques such as X-ray crystallography, NMR spectroscopy, and cryo-electron microscopy.
-Within the PDB, researchers can download \texttt{.pdb} files, that typically represent the three-dimensional structure of a protein at the atomic level, which includes the primary, secondary, and tertiary structures of the protein. 
-PDB files contain information about the 3D coordinates of individual atoms in the protein, as well as information about the type of amino acids, secondary structure elements, and other structural features present in the protein.
-
+The \textbf{Protein Data Bank} (PDB) \cite{rcsb_pdb} is a publicly accessible online repository that stores and provides access to three-dimensional structural data of biological macromolecules, primarily proteins and nucleic acids. 
+The PDB is a global resource that serves as a central repository for experimentally determined structures of biomolecules. In this project, all structures used to generate mutations come from the PDB.
+% Within the PDB, researchers can download \texttt{.pdb} files, representing the three-dimensional structure of a protein at the atomic level. The tertiary structure in a \texttt{.pdb} file typically contains the 3D coordinates of individual atoms, as well as their types.
 
 \subsection{Residue identity prediction}
-Residue identity prediction (RES) is a computational task in bioinformatics that involves predicting the amino acid residue at a particular position within a protein sequence. 
-The accurate prediction of residue identity is an important problem in bioinformatics because it can provide insights into protein function, structure, and evolution. 
-Knowing the identity of residues within a protein sequence can help to identify important functional sites and motifs, which can provide clues about the protein's function and interactions with other molecules. 
+Residue identity prediction (RES) is a computational task in bioinformatics that involves predicting the amino acid residue at a particular position within a protein sequence or structure. 
+Knowing the identity of residues within a protein sequence can help to highlight important functional sites and motifs, which can provide clues about the protein's function and interactions with other molecules. For a formal definition of the RES task, refer to Section \ref{training-overview}.
 
-Residue identity prediction is also important for \textit{protein engineering}, as it can help researchers design proteins with specific functions.
-Machine learning approaches to RES have already been used to engineer plastic decomposing enzymes for higher thermal stability \cite{Lu2022}.
+% Formally, for a given atomic graph $G = (V, E)$ with $G\in\mathcal{G}$, we define the node classification function $f_{\gamma}^t: \mathcal{G} \rightarrow \mathbb{R}^{20}$ with learnable parameters $\gamma$. If node $t$ is the $\text{C}_{\alpha}$ of amino-acid $A \in \mathcal{A} = \{1,\dots,20\}$, then we we consider a \textit{masked} version of this graph, $G_t$, that has the atoms of the side-chain attached to node $t$ removed. Then, we adjust the parameters $\gamma$ of $f_{\gamma}^t$ such that:
+% \begin{equation}
+%     \text{argmax} ~f_{\gamma}^t(G_t) = A
+% \label{res-task-math}
+% \end{equation}
 
-\paragraph{The ATOM3D dataset.} One important benchmark dataset for RES is ATOM3D \cite{atom-3d}.
-The ATOM3D collection is a compilation of datasets that contain the 3D structure of biomolecules, including nucleic acids, small molecules, and proteins. 
-These datasets have been tailored to function as a benchmark for machine learning techniques that train on the 3D molecular structure of molecules in order to solve tasks such as molecular function prediction, ligand binding affinity, or protein-protein interactions.
-
+\FloatBarrier
 \section{Machine learning background}
+\label{sec:machine-learning}
 First proposed by \citet{rosenblatt1958}, neural networks are a type of machine learning model that is inspired by the structure and function of the human brain. 
 They are used for various tasks, such as image and speech recognition, natural language processing, and biomolecular prediction among others.
 
 \subsection{The multi-layer perceptron}
-The most basic neural network model is the \textbf{feedforward neural network}, also known as the multi-layer perceptron (MLP). At a high level, this network consists of multiple layers that apply mathematical transformations to the data, with the outputs of one layer serving as inputs to the next. Borrowing some notation from \citet{bishop2006pattern}, the MLP receives as input a series of input variables $x_1, x_2, \dots, x_D$ and first applies M linear transformations as:
-\begin{equation}
-    a_j = \sum_{j=1}^D w_{ji}^{(1)}x_i + w_{j0}^{(1)}
-\label{mlp-layer1}
-\end{equation}
-for $j = 1,\dots,M$, with the surperscript (1) indicating the that this is the first layer of the network. The \textit{activations} $a_j$ are then pased through a differentiable activation function $h(\cdot)$, rendering $z_j = h(a_j)$. This process can be repeated to give a second round of unit activations as follows:
-\begin{equation}
-    y_k = \sum_{j=1}^Mw_{kj}^{(2)}z_j + w_{k0}^{(2)}
-\label{mlp-layer2}
-\end{equation}
-Where $K$ represents the total number of outputs. The linear transformations presented in Equations \ref{mlp-layer1} and \ref{mlp-layer2} form together an MLP with \textit{one hidden layer} of dimension $M$, an input of dimension $D$, a hidden layer of and an output of dimension $K$. Figure \ref{mlp} illustrates the information flow through an MLP. 
-\begin{figure}
-    \centering
-    \includegraphics[scale=0.75]{masters-report/figures/mlp.png}
-    \caption{Information flow in a multi-layer perceptron with a 3-dimensional input, a hidden dimension of 4 and an output dimension of 2.}
-    \label{mlp}
-\end{figure}
+The most basic neural network model is the \textbf{feedforward neural network}, also known as the multi-layer perceptron (MLP). At a high level, this network consists of multiple layers that apply mathematical transformations to the data, with the outputs of one layer serving as inputs to the next. 
+
+The MLP receives as input a series of input variables $x_1, x_2, \dots, x_n$ and applies a series of linear transformations to the data, followed by a non-linearity. Figure \ref{fig:mlp} exemplifies the transformations applied to the input variables by \textit{one neuron}. Multiple such neurons form a \textit{hidden layer}, and multiple hidden layers form an MLP.
+\input{masters-report/figures/mlp.tex}
+% \begin{equation}
+%     a_j = \sum_{j=1}^D w_{ji}^{(1)}x_i + w_{j0}^{(1)}
+% \label{mlp-layer1}
+% \end{equation}
+% for $j = 1,\dots,M$, with the surperscript (1) indicating the that this is the first layer of the network. The \textit{activations} $a_j$ are then pased through a differentiable activation function $h(\cdot)$, rendering $z_j = h(a_j)$. This process can be repeated to give a second round of unit activations as follows:
+% \begin{equation}
+%     y_k = \sum_{j=1}^Mw_{kj}^{(2)}z_j + w_{k0}^{(2)}
+% \label{mlp-layer2}
+% \end{equation}
+% Where $K$ represents the total number of outputs. The linear transformations presented in Equations \ref{mlp-layer1} and \ref{mlp-layer2} form together an MLP with \textit{one hidden layer} of dimension $M$, an input of dimension $D$, a hidden layer of and an output of dimension $K$. Figure \ref{mlp} illustrates the information flow through an MLP. 
+% \begin{figure}
+%     \centering
+%     \includegraphics[scale=0.75]{masters-report/figures/mlp.png}
+%     \caption{Information flow in a multi-layer perceptron with a 3-dimensional input, a hidden dimension of 4 and an output dimension of 2.}
+%     \label{mlp}
+% \end{figure}
 \paragraph{Activation functions.} Activation functions are mathematical functions applied to the output of a neuron in a neural network. They introduce non-linearities into the network, allowing it to model complex relationships between inputs and outputs.
 There are many commonly used instantiations of the activation function $h(\cdot)$. The two types used in this project are:
 \begin{itemize}
     \item The Rectified Linear Unit (ReLU), first proposed by \citet{relu}: $h(x)=\max\{0, x\}$;
     \item The Sigmoid Linear Unit (SiLU), first proposed by \citet{gelu}: $h(x) = x\times\sigma(x)$, where $\sigma(x) = \frac{1}{1 + e^{-x}}$. 
 \end{itemize}
-A visualisation of their behaviour is presented in Figure \ref{relu-silu}.
-\begin{figure}
-    \centering
-    \includegraphics[scale=0.5]{masters-report/figures/silu-relu.png}
-    \caption{The behaviour of the ReLU and SiLU activation functions. Image taken from \cite{silu}.}
-    \label{relu-silu}
-\end{figure}
+% A visualisation of their behaviour is presented in Figure \ref{relu-silu}.
+% \begin{figure}
+%     \centering
+%     \subfigure[Information flow in an MLP with a 3-dimensional input, a hidden dimension of 4 and an output dimension of 2.]{\includegraphics[width=0.3\textwidth]{masters-report/figures/mlp.png} \label{mlp}}
+%     \hspace{0.1in}
+%     \subfigure[The behaviour of the ReLU and SiLU activation functions. Image taken from \cite{silu}.]{\includegraphics[width=0.4\textwidth]{masters-report/figures/silu-relu.png}
+%     \label{relu-silu}}
+%     \caption{(a) The overall architecture of an MLP; (b) Two commonly used activation functions.}
+% \end{figure}
 \subsection{Training neural networks}
-The outputs $y_k$ of Equation \ref{mlp-layer2}, also known as the predictions made by the model, are scored using a \textit{loss function}. The loss function depends on the task at hand; for example, a common loss function for classification is the cross entropy between the training data and the model distribution:
+The outputs $\mathbf{y}$, also known as the predictions made by the model, are scored using a \textit{loss function}. The loss function depends on the task at hand; for example, a common loss function for classification is the cross entropy between the training data and the model distribution:
 \begin{equation}
     \mathcal{L} = -\mathbb{E}_{\mathbf{x}, \mathbf{y}\sim \hat{p}_\text{data}}\log p_{\text{MLP}}(\mathbf{y}|\mathbf{x})
 \end{equation}
-where $\mathbf{x}$ is a set of training samples with sample $i$ denoted by $\mathbf{x}_i = [x_{i, 1}, x_{i, 2},\dots x_{i, D}]$, and $\mathbf{y}$ a set of outputs. 
+where $\mathbf{x}$ is a set of training samples with sample $i$ denoted by $\mathbf{x}_i = [x_{i, 1}, x_{i, 2},\dots x_{i, D}]$.
 
-This loss value is then used to adjust the weights of the neural network in a process called \textit{training}. The training process in neural networks involves two steps. First, the derivative of the loss function with respect to each weight is computed, using the \textit{backpropagation algorithm} \citep{backpropagation1}. This provides the gradient information needed for the next step. The second stage is the weight update, typically done using a gradient descent technique. In this work, we use the Adam algorithm, first proposed by \cite{adam}.
+This loss value is then used to adjust the weights of the neural network in a process called \textit{training}. The training process in neural networks involves two steps. First, the derivative of the loss function with respect to each weight is computed using the \textit{backpropagation algorithm} \citep{backpropagation1}. This provides the gradient information needed for the next step. The second stage is the weight update, typically done using a gradient descent technique. In this work, we use the Adam algorithm, first proposed by \citet{adam}.
 
-\subsection{Graph Neural Networks}
-{\color{blue}Maybe flesh this out later.}
+\subsection{Graph neural networks}
 
 \textbf{Graph neural networks} (GNNs) are a type of neural network that operate on graphs and are able to capture structural information in the data by leveraging the existent relationships between entities. 
-All GNNs use some form of \textit{neural message passing}, where vector messages are exchanged between nodes and updated using a neural network \citep{gilmer2017neural}.
+All GNNs use some form of \textit{neural message passing}, where vector messages are exchanged between nodes and used to update hidden node features using a neural network \citep{gilmer2017neural}. The message-passing layer can be divided into three parts: message construction, message aggregation, and update. 
 
+\paragraph{Message construction.} 
 Formally, for a given graph $\mathcal{G} = (\mathcal{V}, \mathcal{E})$, at message passing iteration $k$, a hidden embedding $\textbf{h}_u^{(k)} \in \mathbb{R}^{F_k}$ corresponds to each node $u \in \mathcal{V}$. 
 The framework first creates a \textit{message} $\mathbf{m}_{u,v}$ between a node $u$ and its neighbour $v$ by using a message function $\psi^{(k)}: \mathbb{R}^{F_k}\times\mathbb{R}^{F_k} \rightarrow \mathbb{R}^{F_{k}'}$:
 \begin{equation}
     \mathbf{m}_{u, v} = \psi^{(k)}\Big(\textbf{h}_{u}^{(k)}, \textbf{h}_v^{(k)}\Big)
 \end{equation}
+\paragraph{Message aggregation.} 
 These messages are then aggregated using operation $\oplus^{(k)}$; 
-this operation is usually the sum or the average, but other versions exist as well. Note that in general the aggregation function must be \textit{permutation invariant}, since the neighbours of a node $u$ do not have any intristic order.
+this operation is usually the sum or the average, but other versions exist as well. 
+
+Note that in general the message function $\psi^{(k)}$ should be permutation \textit{equivariant}, while the aggregation function $\oplus^{(k)}$ must be permutation \textit{invariant}, since the neighbours of a node $u$ do not have any intrinstic order. In mathematical terms, this means that if any function $f$ takes as input the adjacency matrix $\mathbf{A}$ and $\mathbf{P}$ is a permutation matrix, then:
+\begin{align}
+    f(\mathbf{PAP}^{\top}) &= f(\mathbf{A}) &\text{(Permutation Invariance)} \\
+    f(\mathbf{PAP}^{\top}) &= \mathbf{P}f(\mathbf{A}) &\text{(Permutation Equivariance)}
+\end{align}
+
+\paragraph{Update.}
 Finally, the aggregated message is combined with the node's own embedding $\mathbf{h}_u^{(k)}$ using function $\phi^{(k)}:\mathbb{R}^{F_k} \times \mathbb{R}^{F_{k}'} \rightarrow \mathbb{R}^{F_{k+1}}$, also called the \textit{update} function, as seen in Equation \ref{message-passing}:
 \begin{align}
     \textbf{h}_u^{(k+1)} &= \phi^{(k)}\Big(\textbf{h}_u^{(k)}, \oplus_{v\in \mathcal{N}(u)}^{(k)}\mathbf{m}_{u,v}\Big)
 \label{message-passing}
 \end{align}
 
-A visual representation of the information flow can be seen in Figure \ref{message_passing_fig}.
+A visual representation of the information flow can be seen in Figure \ref{message_passing_fig}. The message-passing framework presented in this section is quite general, and most GNN architectures can be decomposed into the three steps underlined above. Sections \ref{the-gvp-math} and \ref{eqgat-math} will present the specific instantiations used in this project. 
 \input{figures/message_passing_fig.tex}
-\subsection{Equivariant Graph Neural Networks}
-{\color{red} make a difference between invarianta and equivariant layers. }Note how each message-passing iteration in a GNN must be permutation invariant, since changing the node ordering of a graph results in the same permutation applied to the node outputs of the layer. 
+% \FloatBarrier
+\subsection{Equivariant graph neural networks}
+
+Each message-passing iteration in a GNN must be permutation invariant, since changing the node ordering of a graph results in the same permutation applied to the node outputs of the layer. 
 The overall GNN model is also permutation invariant, since graph-level property predictions should not be affected by the order we assign to nodes when processing them.
 
-While permutation equivariance and invariance is sufficient when dealing with graphs that only represent relational information (e.g., social networks), in this project we are interested in graphs that do not only encode relationships, but also geometric information: the atoms of a protein have both 3D coordinates and features.
-Hence, we are interested in developing message passing layers that obey \textbf{translation} and \textbf{rotation equivariance}. Briefly, this means that structural properties (such as volumes, distance, velocity, and relative positioning) are preserved across layers, as shown in Figure \ref{equivariance}. 
+While permutation equivariance and invariance is sufficient when dealing with graphs that only represent relational information (e.g., social networks), in this project we are interested in graphs that do not only encode relationships, but also geometric information: the atoms of a protein have 3D coordinates. This means we would like structural properties (such as volumes, distance, velocity, and relative positioning) to be preserved across layers. Perhaps more importantly, we want to make sure the output does not depend on the coordinate system in which the atom positions happened to have been measured.
+
+% The equivariance and invariance of neural networks, is not, however, a new concept: convolutional neural networks, regarded as the de-facto ML architecture to process image data, already respect the concept of translation equivariance and invariance. Convolutional layers are \textit{equivariant} to translations, while the overall model in \textit{invariant} to translations, as illustrated in Figure \ref{cnn-invariance}. 
+% \begin{figure}[!h]
+%     \centering
+%     \includegraphics[scale=0.6]{masters-report/figures/cnn-invariance.png}
+%     \caption{Translation invariance in a CNN model. A cat stays a cat no matter where it is translated within the picture. }
+%     \label{cnn-invariance}
+% \end{figure}
+
+When it comes to processing the 3D coordinates of atom graphs, we are interested in developing layers that are equivariant to \textit{rotation} and \textit{translation},\footnote{In more mathematical terms, rotation and translation form the \textbf{special Euclidean group SE(3)}.} as exemplified in Figure \ref{equivariance}. These layers can be then combined together to create a rotation and translation invariant model.
+
 \begin{figure}
     \centering
-    \includegraphics[scale=0.7]{figures/equivariance-2.png}
+    \includegraphics[scale=0.6]{figures/equivariance-2.png}
     \caption{Visual representation of rotation equivariance. If the input graph has nodes with 3D coordinates (represented by the green and red arrows) and is rotated by a certain degree, we expect that the output graph will be rotated in a predictible manner as well.}
     \label{equivariance}
 \end{figure}
 
 \subsection{Equivariance formalism}
-Formally, for message-passing iteration $\ell$, given a $\mathbf{H}^{\ell}\in\mathbb{R}^{n \times d}$ matrix of node features for a given molecular graph, where $n$ is the number of nodes (i.e., atoms) and each row $\mathbf{h}^{\ell}_i$ is the $d-$dimensional feature of node $i$; a $\textbf{X}^{\ell}\in \mathbb{R}^{n \times 3}$ matrix of node coordinates for the molecular graph, where $\mathbf{x}^{\ell}_i$ is the 3D coordinate of node $i$; and the $\mathbf{A}\in\mathbb{R}^{n \times n}$ adjancency matrix, 
-we have a GNN layer $\mathbf{F}^{\ell}(\mathbf{H}^{\ell}, \mathbf{X}^{\ell}, \mathbf{A}):\mathbb{R}^{n \times d}\times \mathbb{R}^{n \times 3} \times \mathbb{R}^{n \times n} \rightarrow \mathbb{R}^{n \times d} \times \mathbb{R}^{n \times 3}$ that takes as input node features, coordinates, and the adjancency matrix, and returns the \textit{updated node features} and \textit{coordinates}:
+\paragraph{Layer equivariance.}
+Formally, for message-passing iteration $\ell$, given a $\mathbf{H}^{\ell}\in\mathbb{R}^{n \times d}$ matrix of node features for a given molecular graph, where $n$ is the number of nodes (i.e., atoms) and each row $\mathbf{h}^{\ell}_i$ is the $d-$dimensional feature of node $i$; $\textbf{X}^{\ell}\in \mathbb{R}^{n \times 3}$ is the matrix of node coordinates for the molecular graph, where $\mathbf{x}^{\ell}_i$ is the 3D coordinate of node $i$; and $\mathbf{A}\in\mathbb{R}^{n \times n}$ is the adjancency matrix, 
+we define a GNN layer $\mathbf{F}^{\ell}(\mathbf{H}^{\ell}, \mathbf{X}^{\ell}, \mathbf{A}):\mathbb{R}^{n \times d}\times \mathbb{R}^{n \times 3} \times \mathbb{R}^{n \times n} \rightarrow \mathbb{R}^{n \times d} \times \mathbb{R}^{n \times 3}$ that takes as input node features, coordinates, and the adjancency matrix, and returns the \textit{updated node features} and \textit{coordinates}:
 \begin{equation}
     \mathbf{H}^{\ell +1},\mathbf{X}^{\ell + 1} = \mathbf{F}^{\ell}(\mathbf{H}^{\ell}, \mathbf{X}^{\ell}, \mathbf{A})
 \end{equation} 
 We consider the layer $\mathbf{F}^{\ell}$ to be \textit{equivariant} to 3D rotations and translations if, for rotation matrix $\mathbf{Q}\in \mathbb{R}^{3 \times 3}$ and translation vector $\mathbf{t}\in \mathbb{R}^3$ the following are true:
 \begin{align}
     \mathbf{H}^{\ell + 1}, {\color{blue}\mathbf{X}^{\ell + 1}\mathbf{Q}^{\top}} &= \mathbf{F}^{\ell}(\mathbf{H}^{\ell}, {\color{blue}\mathbf{X}^{\ell}\mathbf{Q}^{\top}}, \mathbf{A}) &\text{{\color{blue}(rotation equivariance)}} \\
-    \mathbf{H}^{\ell + 1}, {\color{green!60!black}\mathbf{X}^{\ell + 1} + \mathbf{1}_n^{\top}}\mathbf{t} &= \mathbf{F}^{\ell}(\mathbf{H}^{\ell}, {\color{green!60!black}\mathbf{X}^{\ell} + \mathbf{1}_n^{\top}\mathbf{t}}, \mathbf{A}) &\text{{\color{green!60!black}(translation invariance)}}
+    \mathbf{H}^{\ell + 1}, {\color{green!60!black}\mathbf{X}^{\ell + 1} + \mathbf{1}_n^{\top}\mathbf{t}} &= \mathbf{F}^{\ell}(\mathbf{H}^{\ell}, {\color{green!60!black}\mathbf{X}^{\ell} + \mathbf{1}_n^{\top}\mathbf{t}}, \mathbf{A}) &\text{{\color{green!60!black}(translation equivariance)}}
 \end{align}
+\paragraph{Model invariance.}
 Simiarly, we consider the entire GNN model $f(\mathbf{H}, \mathbf{X}, \mathbf{A}):\mathbb{R}^{n\times d}\times\mathbb{R}^{n\times 3}\times \mathbb{R}^{n \times n} \rightarrow \mathbb{R}$ to be \textit{invariant} to 3D rotations and translations if:
 \begin{align}
-    f(\mathbf{H}, {\color{blue}\mathbf{X}}, \mathbf{A}) &= f(\mathbf{H}, {\color{blue}\mathbf{X}^{\ell}\mathbf{Q}^{\top}}, \mathbf{A}) \\
-    f(\mathbf{H},  {\color{green!60!black}\mathbf{X}^{\ell}}, \mathbf{A}) &= f(\mathbf{H}, {\color{green!60!black}\mathbf{X}+ \mathbf{1}_n^{\top}\mathbf{t}}, \mathbf{A})
+    f(\mathbf{H}, {\color{blue}\mathbf{X}^{\ell}}, \mathbf{A}) &= f(\mathbf{H}, {\color{blue}\mathbf{X}^{\ell}\mathbf{Q}^{\top}}, \mathbf{A}) \\
+    f(\mathbf{H},  {\color{green!60!black}\mathbf{X}^{\ell}}, \mathbf{A}) &= f(\mathbf{H}, {\color{green!60!black}\mathbf{X}^{\ell}+ \mathbf{1}_n^{\top}\mathbf{t}}, \mathbf{A})
 \end{align}
-
+In practice, researchers usually develop layers that are rotation equivariant and translation invariant, since translation invariance can be easily achieved by using the relative position $\mathbf{x}_{ij} = \mathbf{x}_i - \mathbf{x}_j$ within the construction of the message $\mathbf{m}_{ij}$.

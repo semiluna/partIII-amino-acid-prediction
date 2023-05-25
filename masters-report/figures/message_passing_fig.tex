@@ -1,6 +1,7 @@
-\begin{figure}
+\begin{figure}[!h]
     \centering
-    \begin{tikzpicture}[scale=0.6]
+    \scalebox{0.8}{
+    \begin{tikzpicture}
         % Graph
         \node (x1) [circle, draw=black, fill=red!20] {$\mathbf{x}_1$};
         \node (x2) [circle, draw=black, thick, fill=blue!20, below of=x1, yshift=-2cm, xshift=-4cm] {$\mathbf{x}_2$};
@@ -38,6 +39,7 @@
 
         % \draw [->, line width=2pt] (m13) -- (up1);
     \end{tikzpicture}
+    }
     \caption{Diagram of the information flow of Equation \ref{message-passing}. Node $\mathbf{x}_1$ has three neighbours coloured in blue. The messages between node $\mathbf{x}_1$ and each of its neighbours are aggregated using operator $\oplus$; the result is used to update the embeddings of $\mathbf{x}_1$. Note how in this diagram we are not interested in the edge between $\mathbf{x}_2$ and $\mathbf{x}_4$, since this is the update iteration for node 1.}
     \label{message_passing_fig}
 \end{figure}
